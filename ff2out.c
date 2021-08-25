@@ -1,6 +1,6 @@
 // %P%
 // ----- constants ---------------------------------------------------
-static const char SCCSID[]="$Id: ff2out.c 82438 2015-02-23 17:39:09Z bruce.tran $	20$Date: 2010/03/01 13:24:03 $ NGS";
+static const char SCCSID[]="$Id: ff2out.c 108986 2019-04-10 19:06:23Z bruce.tran $	20$Date: 2010/03/01 13:24:03 $ NGS";
 
 // ----- standard library --------------------------------------------
 #include <stdio.h>
@@ -16,7 +16,7 @@ static const char SCCSID[]="$Id: ff2out.c 82438 2015-02-23 17:39:09Z bruce.tran 
 
 
 int ff2out(FILE* ofp, DATASET1 vec_data, double geoidHt, int imodel,
-           double stddev, double distance) {
+           double stddev) {
 /*******************************************************************************
 * Writes a "Free Format, (For Geoid) Type 2" record to an output file
 *   in - ofp      : pointer to output file
@@ -36,7 +36,6 @@ int ff2out(FILE* ofp, DATASET1 vec_data, double geoidHt, int imodel,
     char  lonmin_c[12];
     char  lonsec_c[12];
     char  cstddev[9];
-    char  cdist[9];
 
     int   latdeg, latmin;
     int   londeg, lonmin;
@@ -52,7 +51,6 @@ int ff2out(FILE* ofp, DATASET1 vec_data, double geoidHt, int imodel,
     strncpy(lonmin_c, "\0", 12);
     strncpy(lonsec_c, "\0", 12);
     strncpy(cstddev,  "\0",  9);
-    strncpy(cdist,    "\0",  9);
 
     if (vec_data.lat == -999  ||  vec_data.lon == -999) {
         latdeg = 99;
@@ -110,20 +108,15 @@ int ff2out(FILE* ofp, DATASET1 vec_data, double geoidHt, int imodel,
        strcpy(cstddev," UNAVAIL");
     }
     else {
+       //stddev = stddev * 1.96;
        sprintf(cstddev,"%8.4lf",stddev);
     }
 
-    if ( distance == -999. ) {
-       strcpy(cdist," UNAVAIL");
-    }
-    else {
-       sprintf(cdist,"%8.3lf",distance);
-    }
 
     // -----------------------------------------------
     // Print to an output file
     // -----------------------------------------------
-    if ( imodel == 12 || imodel == 13) 
+    if ( imodel == 12 || imodel == 13 || imodel == 14) 
        fprintf(ofp, "%3d %2d %8.5lf %3d %2d %8.5lf %8.3lf %s %s\n",
                latdeg, latmin, latsec, londeg, lonmin, lonsec,
                geoidHt, cstddev, vec_data.text);

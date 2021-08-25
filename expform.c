@@ -1,6 +1,6 @@
 // %P%
 // ----- constants ---------------------------------------------------
-static const char SCCSID[]="$Id: expform.c 82438 2015-02-23 17:39:09Z bruce.tran $	20$Date: 2009/05/22 13:12:39 $ NGS";
+static const char SCCSID[]="$Id: expform.c 108231 2019-02-28 14:20:15Z bruce.tran $	20$Date: 2009/05/22 13:12:39 $ NGS";
 
 // ----- standard library --------------------------------------------
 #include <stdio.h>
@@ -12,7 +12,7 @@ static const char SCCSID[]="$Id: expform.c 82438 2015-02-23 17:39:09Z bruce.tran
 #include "expform.h"
 
 
-void expform( void ) {
+void expform( int imodel ) {
 /*******************************************************************************
 * Prints an explanation of the various formats to the display
 *
@@ -53,7 +53,50 @@ Which format would you like explained? \n\
     // -------------------------------------------
     // Explain Free Format (For Geoid) Type 1
     // -------------------------------------------
+if (imodel == 14){
+
         printf("\
+----------------------------------------------------------------------\n\
+ 1 = Free Format (For Geoid) Type 1 : \n\n\
+ALL THE SAMPLES BELOW ARE VALID FORMAT 130 59.987654321 077 59.987654321  \n\
+BM1027                                  50 75 \n\
+XX8063                                          45.3 078 \n\
+                 AIRPORT SC1               47 18.55 107 46 \n\
+                                         30 17 089 01 \n\
+           CORNER MARKER                 48 14 17 120 07 41.247 \n\
+ DATA PT #4077                             42 42 42.4242   104 04 04.44445 \n\
+        this one should be out of bounds    -89 359 \n\
+Bangor ME                                  44 47 59.0 68 49 11 \n\
+   Miami FL                                  25 49 11  80 16 47.0 \n\
+San Diego CA                               32 43 47     117 10 11 \n\
+Seattle WA                                 47.45     122.30 \n\
+San Juan PR                              18 28  066 07\n\
+St. John USVI                               18.3333 64.7333\n\
+SE P.Rico/USVI NAD83(2011) PRVD02&VIVD0915.1    064.1  \n\
+NW P.Rico/USVI NAD83(2011) PRVD02&VIVD0920.9     68.9\n\
+SE Conterminous US NAD83 (2011) NAVD88  24.1    060.1\n\
+NW Conterminous US NAD83 (2011) NAVD88  57.9    129.9\n\
+<----- Columns 01-40 for mark ID ------>\n\
+                                        <------ Columns 41-80 for lat lon ----->\n\
+         1         2         3         4         5         6         7         8\n\
+12345678901234567890123456789012345678901234567890123456789012345678901234567890\n\n\
+RULES FOR GEOID FREE FORMAT TYPE 1 : \n\n\
+This is an ASCII format, where the first 40 characters  \n\
+   of each record may contain the station name or be blank.\n\n\
+The rest of the record (characters 41-80) must contain  \n\
+   the latitude and longitude in one of three formats:     \n\
+  (a) (two numbers)  decimal/integer degrees           \n\
+  (b) (four numbers) integer degrees, decimal/integer minutes\n\
+  (c) (six numbers)  integer degrees, integer minutes, decimal/integer seconds\n\n\
+The latitude must be positive North. \n\
+The longitude can be positive east or west; \n\
+   the user selects which was used when running the program.\n\n\
+                         (Hit RETURN to continue)\n");
+
+    getchar();
+    break;
+}else{
+        printf("%d\
 ----------------------------------------------------------------------\n\
  1 = Free Format (For Geoid) Type 1 : \n\n\
 ALL THE SAMPLES BELOW ARE VALID FORMAT 130 59.987654321 077 59.987654321  \n\
@@ -107,11 +150,11 @@ The rest of the record (characters 41-80) must contain  \n\
 The latitude must be positive North. \n\
 The longitude can be positive east or west; \n\
    the user selects which was used when running the program.\n\n\
-                         (Hit RETURN to continue)\n");
+                         (Hit RETURN to continue)\n", imodel);
 
         getchar();
         break;
-
+}
     case 2:
     // -------------------------------------------
     // Explain Free Format (For Geoid) Type 2

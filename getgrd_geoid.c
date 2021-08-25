@@ -1,6 +1,6 @@
 // %P%
 // ----- constants ---------------------------------------------------
-// $Rev:: 8#$
+// $Rev:: 1#$
 // $Date::  $
 // $Id:: ge#$
 
@@ -911,6 +911,60 @@ void getgrd_geoid(int imodel, char* dirnam, int is_subr, int* nfiles, int* nff,
                 strcpy(this_fname, dirnam);
             }
             strcat(this_fname, "g2012bp0");
+            strcat(this_fname, suffix);
+
+            strcpy(vec_fnames[numVecFiles++], this_fname);
+        }
+
+     // -----------------------------------------------------
+    // The GEOID18 file names
+    // -----------------------------------------------------
+    } else if (imodel == 14) {
+        *nfiles = 16;
+        int numVecFiles = 0;
+
+        // CONUS -----
+        // Attempt to open the one file model
+        FILE* ifp_conus;
+        strncpy(this_fname, "\0", 256);
+        if (dirlen > 0) {
+            strcpy(this_fname, dirnam);
+        }
+        strcat(this_fname, "g2018u0.bin");
+
+        if ((ifp_conus = fopen(this_fname, "rb")) != NULL) {
+            *nfiles -= 7;
+            strcpy(vec_fnames[numVecFiles++], this_fname);
+	    fclose(ifp_conus);
+
+        } else {
+            // First 8 files are CONUS -----
+            for (ii = 1; ii <= 8; ++ii) {
+                strncpy(this_fname, "\0", 256);
+                strncpy(cval,       "\0",   3);
+                sprintf(cval, "%01d", ii);
+                if (dirlen > 0) {
+                    strcpy(this_fname, dirnam);
+                }
+                strcat(this_fname, "g2018u");
+                strcat(this_fname, cval);
+                strcat(this_fname, suffix);
+
+                strcpy(vec_fnames[numVecFiles++], this_fname);
+            }
+        }
+
+        *nfiles -= 7;
+
+        // Next 1 file is PR/VI -----
+        for (ii = 1; ii <= 1; ++ii) {
+            strncpy(this_fname, "\0", 256);
+            strncpy(cval,       "\0",   3);
+            sprintf(cval, "%01d", ii);
+            if (dirlen > 0) {
+                strcpy(this_fname, dirnam);
+            }
+            strcat(this_fname, "g2018p0");
             strcat(this_fname, suffix);
 
             strcpy(vec_fnames[numVecFiles++], this_fname);

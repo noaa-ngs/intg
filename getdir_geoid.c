@@ -77,7 +77,10 @@ int getdir_geoid(int imodel, char* dirnam) {
         break;
         
     case 13: 
-        strcpy(dirnam, "/ngslib/data/Geoid/Geoid12B/");
+        strcpy(dirnam, "/ngslib/data/Geoid/Geoid12C/");
+        break;
+    case 14:
+        strcpy(dirnam, "/ngslib/data/Geoid/Geoid18/");
         break;
         
     default: 

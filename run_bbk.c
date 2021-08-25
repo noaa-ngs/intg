@@ -1,6 +1,6 @@
 // %P%
 // ----- constants ---------------------------------------------------
-static const char SCCSID[]="$Id: run_bbk.c 82092 2015-01-26 14:39:15Z bruce.tran $	20$Date: 2010/06/21 09:13:44 $ NGS";
+static const char SCCSID[]="$Id: run_bbk.c 108231 2019-02-28 14:20:15Z bruce.tran $	20$Date: 2010/06/21 09:13:44 $ NGS";
 static const int  DEBUG = 0;           // diagnostics print if != 0
 
 // ----- standard library --------------------------------------------
@@ -225,6 +225,7 @@ void run_bbk(FILE* ifp, FILE* ofp, FILE** vec_ifp, GRID_HEADER vec_hdr[50],
                             if (imodel == 11) card2[42] = '4';   // USGG2012
                             if (imodel == 12) card2[42] = '5';   // GEOID12A
                             if (imodel == 13) card2[42] = '6';   // GEOID12B
+                            if (imodel == 14) card2[42] = '7';   // GEOID18 
 
                             if (ofp) {
                                 fprintf(ofp, "%s", card2);
@@ -300,6 +301,7 @@ void run_bbk(FILE* ifp, FILE* ofp, FILE** vec_ifp, GRID_HEADER vec_hdr[50],
                             if (imodel == 11) card86[42] = '4';   // USGG2012
                             if (imodel == 12) card86[42] = '5';   // GEOID12A
                             if (imodel == 13) card86[42] = '6';   // GEOID12B
+                            if (imodel == 14) card86[42] = '7';   // GEOID18 
 
                             if (ofp) {
                                 fprintf(ofp, "%s\n", card86);
@@ -377,6 +379,10 @@ void run_bbk(FILE* ifp, FILE* ofp, FILE** vec_ifp, GRID_HEADER vec_hdr[50],
       // Not Used  if (imodel == *)  card2[42] = 'Z';   // USGG2006
                     if (imodel == 6)  card2[42] = '1';   // USGG2009
                     if (imodel == 7)  card2[42] = '2';   // GEOID09
+                    if (imodel == 11) card2[42] = '4';   // USGG2012
+                    if (imodel == 12) card2[42] = '5';   // GEOID12A
+                    if (imodel == 13) card2[42] = '6';   // GEOID12B
+                    if (imodel == 14) card2[42] = '7';   // GEOID18 
 
                     ight = (int)floor((val * 1000.0) + 0.5);
                     sprintf(ight_c, "%7d", ight);
@@ -445,6 +451,11 @@ void run_bbk(FILE* ifp, FILE* ofp, FILE** vec_ifp, GRID_HEADER vec_hdr[50],
   // Not Used  if (imodel == *)  card2[42] = 'Z';   // USGG2006
                 if (imodel == 6)  card2[42] = '1';   // USGG2009
                 if (imodel == 7)  card2[42] = '2';   // GEOID09
+                if (imodel == 11) card2[42] = '4';   // USGG2012
+                if (imodel == 12) card2[42] = '5';   // GEOID12A
+                if (imodel == 13) card2[42] = '6';   // GEOID12B
+                if (imodel == 14) card2[42] = '7';   // GEOID18 
+
 
                 ight = (int)floor((val * 1000.0) + 0.5);
                 sprintf(ight_c, "%7d", ight);

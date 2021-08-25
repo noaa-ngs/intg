@@ -1,6 +1,6 @@
 // %P%
 // ----- constants ---------------------------------------------------
-static const char SCCSID[]="$Id: ff4out.c 86255 2015-11-16 13:02:25Z bruce.tran $	20$Date: 2010/03/01 13:25:22 $ NGS";
+static const char SCCSID[]="$Id: ff4out.c 108278 2019-03-04 15:47:23Z bruce.tran $	20$Date: 2010/03/01 13:25:22 $ NGS";
 
 // ----- standard library --------------------------------------------
 #include <stdio.h>
@@ -16,7 +16,7 @@ static const char SCCSID[]="$Id: ff4out.c 86255 2015-11-16 13:02:25Z bruce.tran 
 
 
 int ff4out(FILE* ofp, DATASET1 vec_data, double geoidHt, int imodel,
-           double stddev, double distance) {
+           double stddev) {
 /*******************************************************************************
 * Writes a record from keyboard input
 * 
@@ -33,7 +33,6 @@ int ff4out(FILE* ofp, DATASET1 vec_data, double geoidHt, int imodel,
     char  lonmin_c[12];
     char  lonsec_c[12];
     char  cstddev[9];
-    char  cdist[9];
 
     int   latdeg, latmin;
     int   londeg, lonmin;
@@ -49,7 +48,6 @@ int ff4out(FILE* ofp, DATASET1 vec_data, double geoidHt, int imodel,
     strncpy(lonmin_c, "\0", 12);
     strncpy(lonsec_c, "\0", 12);
     strncpy(cstddev,  "\0",  9);
-    strncpy(cdist,    "\0",  9);
 
     if (vec_data.lat == -999  ||  vec_data.lon == -999) {
         latdeg = 99;
@@ -107,21 +105,17 @@ int ff4out(FILE* ofp, DATASET1 vec_data, double geoidHt, int imodel,
        strcpy(cstddev," UNAVAIL");
     }
     else {
+/*
        stddev = stddev * 1.96;
+*/
        sprintf(cstddev,"%8.3lf",stddev);
     }
 
-    if ( distance == -999. ) {
-       strcpy(cdist," UNAVAIL");
-    }
-    else {
-       sprintf(cdist,"%8.3lf",distance);
-    }
 
     // -----------------------------------------------
     // Print to display
     // -----------------------------------------------
-    if ( imodel == 12 || imodel == 13 ) {
+    if ( imodel == 12 || imodel == 13 || imodel == 14) {
        printf("\nYour Result: \n");
        //printf("%s latitude        longitude       N         stddev distance\n", space40);
        //printf("Station Name %s  ddd mm ss.sssss ddd mm ss.sssss  meters    meters       km\n",
@@ -131,6 +125,10 @@ int ff4out(FILE* ofp, DATASET1 vec_data, double geoidHt, int imodel,
        //       vec_data.text, 
        //       latdeg, latmin, latsec, 
        //       londeg, lonmin, lonsec, geoidHt, cstddev, cdist);
+       if (geoidHt == -999. ) {
+           printf("Point coordinate outside the area for which the model is valid\n");
+           printf("If area is Alaska, Hawaii, Guam, American Samoa, or Commonwealth of Northern Marianas Islands please use GEOID12B\n");
+       }else{
        printf("%s latitude        longitude       N         error (95%% confidence interval)\n", space40);
        printf("Station Name %s  ddd mm ss.sssss ddd mm ss.sssss  meters    meters\n",
              space25);
@@ -139,6 +137,7 @@ int ff4out(FILE* ofp, DATASET1 vec_data, double geoidHt, int imodel,
               vec_data.text, 
               latdeg, latmin, latsec, 
               londeg, lonmin, lonsec, geoidHt, cstddev);
+       }
     }
     else {
        printf("\nYour Result: \n");

@@ -63,7 +63,8 @@ int which1(double xlat, double xlon, int nfiles, int kk, int imodel,
     ||  imodel == 7       // GEOID09
     ||  imodel == 11      // USGG2012
     ||  imodel == 12      // GEOID12A
-    ||  imodel == 13) {   // GEOID12B
+    ||  imodel == 13      // GEOID12B
+    ||  imodel == 14) {   // GEOID18
 
         if (DEBUG != 0) {
             printf("1-In which1 Alaska in model block using kk = %d\n", kk);

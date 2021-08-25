@@ -1,8 +1,8 @@
 // %P%
 // ----- constants ---------------------------------------------------
-static const char SCCSID[]="$Id: intg.c 86256 2015-11-16 13:07:52Z bruce.tran $	20$Date: 2010/06/21 16:47:51 $ NGS";
-static const char PGMVER[]="3.3";
-static const char PGMDAT[]="2015/11/16";
+static const char SCCSID[]="$Id: intg.c 108986 2019-04-10 19:06:23Z bruce.tran $	20$Date: 2010/06/21 16:47:51 $ NGS";
+static const char PGMVER[]="3.4";
+static const char PGMDAT[]="2019/05/15";
 static const int  DEBUG = 0;           // diagnostics print if != 0
 static const int  MEM_STEP = 40;       // dynamic allocation increment
 
@@ -92,10 +92,8 @@ int main( const int argc, const char* argv[] ) {
     FILE* ofp;
     FILE* vec_ifp[50];            // vector of FILE* of height grids
     FILE* var_ifp[50];            // vector of FILE* of variance grids
-    FILE* dis_ifp[50];            // vector of FILE* of distance grids
     char  vec_fnames[50][256];    // vector of filenames of height grids
     char  var_fnames[50][256];    // vector of filenames of variance grids
-    char  dis_fnames[50][256];    // vector of filenames of distance grids
 
     GRID_HEADER vec_hdr[50];      // vector of header file data
     GRID_HEADER var_hdr[50];      // vector of header file data
@@ -133,9 +131,7 @@ int main( const int argc, const char* argv[] ) {
     double  std    = 0.0;
     double  rms    = 0.0;
     double  geoidHt= 0.0;         // solution
-    double  variance = -999.;
-    double  stddev = -999.;
-    double  distance = -999.;
+    double stddev = -999.;
 
     int  iform  = 0;
     int  ipos;
@@ -171,7 +167,6 @@ int main( const int argc, const char* argv[] ) {
     for (ii = 0; ii < 50; ++ii) {
         strncpy(vec_fnames[ii], "\0", 256);
         strncpy(var_fnames[ii], "\0", 256);
-        strncpy(dis_fnames[ii], "\0", 256);
     }
 
     // ---------------------------------------------------------
@@ -199,6 +194,7 @@ Which geoid model do you wish to use?\n\n\
    11 = USGG2012\n\
    12 = GEOID12A\n\
    13 = GEOID12B\n\
+   14 = GEOID18\n\
   99 = END PROGRAM\n\n\
    -> ");
         strncpy(cinput, "\0", 42);
@@ -207,7 +203,7 @@ Which geoid model do you wish to use?\n\n\
 
         if (imodel == 99) return(0);
 
-        if ((imodel >= 1 && imodel <= 7)  || imodel == 9 || imodel == 11 || imodel == 12 || imodel == 13) {
+        if ((imodel >= 1 && imodel <= 7)  || imodel == 9 || imodel == 11 || imodel == 12 || imodel == 13 || imodel == 14) {
             ++iii;
         } else {
             fprintf(stderr,"Error: Not a valid response. Try again.\n");
@@ -233,7 +229,7 @@ Which geoid model do you wish to use?\n\n\
     getgrd_geoid(imodel, dirnam, is_subr, &nfiles, &nff,
                  vec_fnames, vec_ifp);
     getgrd_vardis(imodel, dirnam, is_subr, &nvdfiles, &nvff, &ndff,
-                 var_fnames, dis_fnames, var_ifp, dis_ifp);
+                 var_fnames, var_ifp);
 
     // ---------------------------------------------------------
     // Read the headers of all geoid files which
@@ -243,7 +239,6 @@ Which geoid model do you wish to use?\n\n\
     // ---------------------------------------------------------
     getheaders( vec_ifp, vec_hdr, nfiles );
     getheaders( var_ifp, var_hdr, nvdfiles );
-    getheaders( dis_ifp, dis_hdr, nvdfiles );
 
     // ---------------------------------------------------------
     // How to input?
@@ -294,7 +289,7 @@ Which format will you use for input? \n\
             if (iform == 0) {
                 exit(0);
             } else if (iform == 99) {
-                expform();
+                expform(imodel);
             }
             else if ((iform > 0 && iform < 4)) {
                 ++iii;
@@ -644,7 +639,6 @@ Which longitude convention will you use? \n\
         if (xlat == -999. || xlon == -999.) {
             geoidHt = (double) -999.;
             stddev = (double) -999.;
-            distance = (double) -999.;
             continue;
         } else {
 
@@ -657,7 +651,6 @@ Which longitude convention will you use? \n\
             if (kk == -1) {
                 geoidHt = (double) -999.;
                 stddev = (double) -999.;
-                distance = (double) -999.;
 
             // Otherwise, do the interpolation
             } else {
@@ -669,23 +662,17 @@ Which longitude convention will you use? \n\
 
                 if (DEBUG != 0) { printf("geoidHt = %lf \n", geoidHt ); }
 
-                //  If we have variance and distance grids available,
+                //  If we have stddev and distance grids available,
                 //  interpolate from those as well
                 stddev = (double) -999.;
-                distance = (double) -999.;
                 if ( nvdfiles > 0 ) {
                    mm = which1( xlat, xlon, nvdfiles, mm, imodel, var_fnames,
                                 var_hdr, var_ifp );
                    if ( mm != -1 ) {
-                      variance = interg_idw(xlat, xlon, var_hdr, var_ifp, mm );
-                      stddev = sqrt(variance);
+                      stddev = interg_idw(xlat, xlon, var_hdr, var_ifp, mm );
+                      stddev = stddev * 1.96;
                    }
 
-                   mm = which1( xlat, xlon, nvdfiles, mm, imodel, dis_fnames,
-                                dis_hdr, dis_ifp );
-                   if ( mm != -1 ) {
-                      distance = interg_idw(xlat, xlon, dis_hdr, dis_ifp, mm );
-                   }
                 }
                 //printf("SAGout: %lf +/-%lf m %lf \n",geoidHt,stddev,distance);
 
@@ -710,16 +697,16 @@ Which longitude convention will you use? \n\
             }
 
             if (strcmp(ofyn, "Y") == 0 || strcmp(ofyn, "y") == 0) {
-                if      (iform == 1)  ff1out(ofp, vec_data[ii], geoidHt, imodel, stddev, distance);
-                else if (iform == 2)  ff2out(ofp, vec_data[ii], geoidHt, imodel, stddev, distance);
+                if      (iform == 1)  ff1out(ofp, vec_data[ii], geoidHt, imodel, stddev);
+                else if (iform == 2)  ff2out(ofp, vec_data[ii], geoidHt, imodel, stddev);
                 // else if (iform == 3)  // bluebook - do nothing -----
 
-                else if (iinput == 1) ff1out(ofp, vec_data[ii], geoidHt, imodel, stddev, distance);
+                else if (iinput == 1) ff1out(ofp, vec_data[ii], geoidHt, imodel, stddev);
 
             }//~if(ofyn)
 
             if( (iinput == 1) && (strcmp(ofyn, "Y") != 0) ){
-                ff4out(ofp, vec_data[ii], geoidHt, imodel, stddev, distance);
+                ff4out(ofp, vec_data[ii], geoidHt, imodel, stddev);
             }
 
 

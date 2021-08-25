@@ -12,8 +12,8 @@
 // ----- functions ---------------------------------------------------
 void getgrd_vardis(int  imodel, char* dirnam, int is_subr, int* nfiles,
                  int*  nvff,                 int*  ndff,  
-                 char  var_fnames[50][256], char  dis_fnames[50][256],
-                 FILE* var_ifp[50],         FILE* dis_ifp[50]);
+                 char  var_fnames[50][256], 
+                 FILE* var_ifp[50] );
 
 #endif //~GETGRD_VARDIS_H
 
