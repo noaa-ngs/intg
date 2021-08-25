@@ -1,8 +1,8 @@
 // %P%
 // ----- constants ---------------------------------------------------
-static const char SCCSID[]="$Id: intg.c 82438 2015-02-23 17:39:09Z bruce.tran $	20$Date: 2010/06/21 16:47:51 $ NGS";
-static const char PGMVER[]="3.2";
-static const char PGMDAT[]="2015/01/22";
+static const char SCCSID[]="$Id: intg.c 86256 2015-11-16 13:07:52Z bruce.tran $	20$Date: 2010/06/21 16:47:51 $ NGS";
+static const char PGMVER[]="3.3";
+static const char PGMDAT[]="2015/11/16";
 static const int  DEBUG = 0;           // diagnostics print if != 0
 static const int  MEM_STEP = 40;       // dynamic allocation increment
 

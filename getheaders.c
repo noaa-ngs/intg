@@ -1,12 +1,13 @@
 // %P%
 // ----- constants ---------------------------------------------------
-static const char SCCSID[]="$Id: getheaders.c 63132 2012-06-13 16:50:32Z Srinivas.Reddy $	20$Date: 2010/04/26 13:41:10 $ NGS";
+static const char SCCSID[]="$Id: getheaders.c 86264 2015-11-16 13:52:29Z bruce.tran $	20$Date: 2010/04/26 13:41:10 $ NGS";
 static const int  DEBUG = 0;           // diagnostics print if != 0
 
 // ----- standard library --------------------------------------------
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 // ----- classes, structures, types ----------------------------------
 #include "grid_header.h"            // struct
@@ -32,6 +33,7 @@ typedef struct {
 #include "flip_endian_d.h"
 #include "flip_endian_l.h"
 
+static int32_t swap_int32( int32_t val );
 
 int getheaders(FILE* vec_ifp[50], GRID_HEADER vec_hdr[50], int nfiles) {
 /*******************************************************************************
@@ -90,8 +92,10 @@ int getheaders(FILE* vec_ifp[50], GRID_HEADER vec_hdr[50], int nfiles) {
                 vec_hdr[ii].lon_min   = flip_endian_d( vec_hdr[ii].lon_min   );
                 vec_hdr[ii].lat_delta = flip_endian_d( vec_hdr[ii].lat_delta );
                 vec_hdr[ii].lon_delta = flip_endian_d( vec_hdr[ii].lon_delta );
-                vec_hdr[ii].lat_num   = flip_endian_l( vec_hdr[ii].lat_num   );
-                vec_hdr[ii].lon_num   = flip_endian_l( vec_hdr[ii].lon_num   );
+                //vec_hdr[ii].lat_num   = flip_endian_l( vec_hdr[ii].lat_num   );
+                //vec_hdr[ii].lon_num   = flip_endian_l( vec_hdr[ii].lon_num   );
+                vec_hdr[ii].lat_num   = swap_int32( vec_hdr[ii].lat_num   );
+                vec_hdr[ii].lon_num   = swap_int32( vec_hdr[ii].lon_num   );
                 //Don't reset back to 1. ikind is used in other routines
                 //vec_hdr[ii].ikind     = flip_endian_l( vec_hdr[ii].ikind     );
             }
@@ -115,3 +119,42 @@ int getheaders(FILE* vec_ifp[50], GRID_HEADER vec_hdr[50], int nfiles) {
 
 }//~getheaders
 
+//! Byte swap unsigned short
+uint16_t swap_uint16( uint16_t val )
+{
+    return (val << 8) | (val >> 8 );
+}
+
+//! Byte swap short
+int16_t swap_int16( int16_t val )
+{
+    return (val << 8) | ((val >> 8) & 0xFF);
+}
+
+//! Byte swap unsigned int
+uint32_t swap_uint32( uint32_t val )
+{
+    val = ((val << 8) & 0xFF00FF00 ) | ((val >> 8) & 0xFF00FF );
+    return (val << 16) | (val >> 16);
+}
+
+//! Byte swap int
+int32_t swap_int32( int32_t val )
+{
+    val = ((val << 8) & 0xFF00FF00) | ((val >> 8) & 0xFF00FF );
+    return (val << 16) | ((val >> 16) & 0xFFFF);
+}
+
+int64_t swap_int64( int64_t val )
+{
+    val = ((val << 8) & 0xFF00FF00FF00FF00ULL ) | ((val >> 8) & 0x00FF00FF00FF00FFULL );
+    val = ((val << 16) & 0xFFFF0000FFFF0000ULL ) | ((val >> 16) & 0x0000FFFF0000FFFFULL );
+    return (val << 32) | ((val >> 32) & 0xFFFFFFFFULL);
+}
+
+uint64_t swap_uint64( uint64_t val )
+{
+    val = ((val << 8) & 0xFF00FF00FF00FF00ULL ) | ((val >> 8) & 0x00FF00FF00FF00FFULL );
+    val = ((val << 16) & 0xFFFF0000FFFF0000ULL ) | ((val >> 16) & 0x0000FFFF0000FFFFULL );
+    return (val << 32) | (val >> 32);
+}

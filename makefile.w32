@@ -50,6 +50,7 @@ OBJECTS  = \
   run_bbk.o      \
   bilin.o          \
   c2v.o            \
+  compute_dist.o            \
   dd_dms.o         \
   dms_dd.o         \
   flip_endian_d.o  \
@@ -57,9 +58,12 @@ OBJECTS  = \
   flip_endian_l.o  \
   getdir_geoid.o \
   getgrd_geoid.o   \
+  getgrd_vardis.o   \
   getheaders.o     \
+  idw_interp.o         \
   initsp.o         \
   interg.o         \
+  interg_idw.o         \
   spline.o         \
   spline4.o        \
   spline6.o        \

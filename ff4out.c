@@ -1,6 +1,6 @@
 // %P%
 // ----- constants ---------------------------------------------------
-static const char SCCSID[]="$Id: ff4out.c 82036 2015-01-22 16:32:36Z bruce.tran $	20$Date: 2010/03/01 13:25:22 $ NGS";
+static const char SCCSID[]="$Id: ff4out.c 86255 2015-11-16 13:02:25Z bruce.tran $	20$Date: 2010/03/01 13:25:22 $ NGS";
 
 // ----- standard library --------------------------------------------
 #include <stdio.h>
@@ -107,7 +107,8 @@ int ff4out(FILE* ofp, DATASET1 vec_data, double geoidHt, int imodel,
        strcpy(cstddev," UNAVAIL");
     }
     else {
-       sprintf(cstddev,"%8.4lf",stddev);
+       stddev = stddev * 1.96;
+       sprintf(cstddev,"%8.3lf",stddev);
     }
 
     if ( distance == -999. ) {
@@ -130,7 +131,7 @@ int ff4out(FILE* ofp, DATASET1 vec_data, double geoidHt, int imodel,
        //       vec_data.text, 
        //       latdeg, latmin, latsec, 
        //       londeg, lonmin, lonsec, geoidHt, cstddev, cdist);
-       printf("%s latitude        longitude       N         stddev\n", space40);
+       printf("%s latitude        longitude       N         error (95%% confidence interval)\n", space40);
        printf("Station Name %s  ddd mm ss.sssss ddd mm ss.sssss  meters    meters\n",
              space25);
 
