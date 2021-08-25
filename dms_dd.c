@@ -1,6 +1,6 @@
 // %P%
 // ----- constants ---------------------------------------------------
-static const char SCCSID[]="$Id: dms_dd.c 50357 2010-10-19 15:58:42Z Srinivas.Reddy $	20$Date: 2009/05/26 12:26:02 $ NGS";
+static const char SCCSID[]="$Id: dms_dd.c 50355 2010-10-19 15:55:47Z Srinivas.Reddy $	20$Date: 2009/05/26 12:26:02 $ NGS";
 
 // ----- standard library --------------------------------------------
 #include <stdio.h>

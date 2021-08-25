@@ -68,6 +68,18 @@ int getdir_geoid(int imodel, char* dirnam) {
         strcpy(dirnam, "/ngslib/data/Geoid/Geoid99/");
         break;
 
+    case 11: 
+        strcpy(dirnam, "/ngslib/data/Geoid/USGG2012/");
+        break;
+
+    case 12: 
+        strcpy(dirnam, "/ngslib/data/Geoid/Geoid12A/");
+        break;
+        
+    case 13: 
+        strcpy(dirnam, "/ngslib/data/Geoid/Geoid12B/");
+        break;
+        
     default: 
         fprintf(stderr, "ERROR: in file getdirux, invalid option %d\n", imodel);
         return( -1 );

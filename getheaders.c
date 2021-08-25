@@ -1,6 +1,6 @@
 // %P%
 // ----- constants ---------------------------------------------------
-static const char SCCSID[]="$Id: getheaders.c 35379 2010-06-11 13:32:40Z Srinivas.Reddy $	20$Date: 2010/04/26 13:41:10 $ NGS";
+static const char SCCSID[]="$Id: getheaders.c 63132 2012-06-13 16:50:32Z Srinivas.Reddy $	20$Date: 2010/04/26 13:41:10 $ NGS";
 static const int  DEBUG = 0;           // diagnostics print if != 0
 
 // ----- standard library --------------------------------------------
@@ -15,9 +15,17 @@ typedef struct {
     double fd;
 } BUF_DBL;
 
-typedef struct {
-    long fl;
-} BUF_LONG;
+#ifdef NGS_DB_ORACLE
+  typedef struct {
+      int fl;
+  } BUF_LONG;
+
+#else
+
+  typedef struct {
+      long fl;
+  } BUF_LONG;
+#endif
 
 // ----- functions ---------------------------------------------------
 #include "getheaders.h"
@@ -38,6 +46,16 @@ int getheaders(FILE* vec_ifp[50], GRID_HEADER vec_hdr[50], int nfiles) {
 * fseek positions the get pointer. 
 * fread performs the read, and repositions the get pointer.
 *******************************************************************************/
+    int  sizeofdouble;
+    int  sizeoflong;
+#ifdef NGS_DB_ORACLE
+    //64-bit but grids were created with 32-bit
+    sizeofdouble = 8; //based on 64 or 32 bit mode this could change
+    sizeoflong = 4; //based on 64 or 32 bit mode this could change. 4 for 32-bit and 8 for 64-bit
+#else
+    sizeofdouble = sizeof(double); 
+    sizeoflong = sizeof(long); 
+#endif
     BUF_DBL   buf_dbl;
     BUF_LONG  buf_long;
     int  ii =0;
@@ -45,25 +63,26 @@ int getheaders(FILE* vec_ifp[50], GRID_HEADER vec_hdr[50], int nfiles) {
     for (ii = 0; ii < nfiles; ++ii) {
         if (vec_ifp[ii] != NULL) {
             fseek( vec_ifp[ii],  0L, SEEK_SET );
-            fread( (char*)&buf_dbl,  sizeof(double), 1, vec_ifp[ii] );
+
+            fread( (char*)&buf_dbl,  sizeofdouble, 1, vec_ifp[ii] );
             vec_hdr[ii].lat_min    = buf_dbl.fd;
 
-            fread( (char*)&buf_dbl,  sizeof(double), 1, vec_ifp[ii] );
+            fread( (char*)&buf_dbl,  sizeofdouble, 1, vec_ifp[ii] );
             vec_hdr[ii].lon_min    = buf_dbl.fd;
 
-            fread( (char*)&buf_dbl,  sizeof(double), 1, vec_ifp[ii] );
+            fread( (char*)&buf_dbl,  sizeofdouble, 1, vec_ifp[ii] );
             vec_hdr[ii].lat_delta  = buf_dbl.fd;
 
-            fread( (char*)&buf_dbl,  sizeof(double), 1, vec_ifp[ii] );
+            fread( (char*)&buf_dbl,  sizeofdouble, 1, vec_ifp[ii] );
             vec_hdr[ii].lon_delta  = buf_dbl.fd;
 
-            fread( (char*)&buf_long, sizeof(long),   1, vec_ifp[ii] );
+            fread( (char*)&buf_long, sizeoflong,   1, vec_ifp[ii] );
             vec_hdr[ii].lat_num    = buf_long.fl;
 
-            fread( (char*)&buf_long, sizeof(long),   1, vec_ifp[ii] );
+            fread( (char*)&buf_long, sizeoflong,   1, vec_ifp[ii] );
             vec_hdr[ii].lon_num    = buf_long.fl;
 
-            fread( (char*)&buf_long, sizeof(long),   1, vec_ifp[ii] );
+            fread( (char*)&buf_long, sizeoflong,   1, vec_ifp[ii] );
             vec_hdr[ii].ikind      = buf_long.fl;
 
             if (vec_hdr[ii].ikind != 1) {
@@ -73,7 +92,8 @@ int getheaders(FILE* vec_ifp[50], GRID_HEADER vec_hdr[50], int nfiles) {
                 vec_hdr[ii].lon_delta = flip_endian_d( vec_hdr[ii].lon_delta );
                 vec_hdr[ii].lat_num   = flip_endian_l( vec_hdr[ii].lat_num   );
                 vec_hdr[ii].lon_num   = flip_endian_l( vec_hdr[ii].lon_num   );
-                vec_hdr[ii].ikind     = flip_endian_l( vec_hdr[ii].ikind     );
+                //Don't reset back to 1. ikind is used in other routines
+                //vec_hdr[ii].ikind     = flip_endian_l( vec_hdr[ii].ikind     );
             }
 
             if (DEBUG != 0) {

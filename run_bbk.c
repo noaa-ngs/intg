@@ -1,6 +1,6 @@
 // %P%
 // ----- constants ---------------------------------------------------
-static const char SCCSID[]="$Id: run_bbk.c 43832 2010-07-12 16:45:22Z bruce.tran $	20$Date: 2010/06/21 09:13:44 $ NGS";
+static const char SCCSID[]="$Id: run_bbk.c 82092 2015-01-26 14:39:15Z bruce.tran $	20$Date: 2010/06/21 09:13:44 $ NGS";
 static const int  DEBUG = 0;           // diagnostics print if != 0
 
 // ----- standard library --------------------------------------------
@@ -21,7 +21,7 @@ static const int  DEBUG = 0;           // diagnostics print if != 0
 
 
 void run_bbk(FILE* ifp, FILE* ofp, FILE** vec_ifp, GRID_HEADER vec_hdr[50], 
-             int nfiles, int imodel) {
+             char vec_fnames[50][256], int nfiles, int imodel) {
 /*******************************************************************************
 *   in - ifp    : input bluebook file
 *   in - ofp    : output bluebook file, optional
@@ -104,13 +104,8 @@ void run_bbk(FILE* ifp, FILE* ofp, FILE** vec_ifp, GRID_HEADER vec_hdr[50],
             if (DEBUG != 0) {
                 printf("card = \n%s\n", card);
                 printf("xlat = %lf  xlon = %lf\n", xlat, xlon);
+                printf("card[55] = %c \n", card[55]);
                 printf("card[68] = %c \n", card[68]);
-            }
-
-            if (card[68] == 'W') xlon = 360.0 - xlon;
-
-            if (DEBUG != 0) {
-                printf("xlat = %lf  xlon = %lf\n", xlat, xlon);
             }
 
             // If the xlat/xlon values are bad, don't do an interpolation.
@@ -118,6 +113,14 @@ void run_bbk(FILE* ifp, FILE* ofp, FILE** vec_ifp, GRID_HEADER vec_hdr[50],
             // record associated with this erroneous *80* record will
             // remain unmodified.
             if (xlat == -999.0 || xlon == -999.0)  continue;
+
+            if (card[55] == 'S' || card[55] == 's') xlat *= -1.0;
+
+            if (card[68] == 'W' || card[68] == 'w') xlon = 360.0 - xlon;
+
+            if (DEBUG != 0) {
+                printf("xlat = %lf  xlon = %lf\n", xlat, xlon);
+            }
 
             // Arriving here, the *80* record has a good lat/lon value
             ++kount;
@@ -173,7 +176,7 @@ void run_bbk(FILE* ifp, FILE* ofp, FILE** vec_ifp, GRID_HEADER vec_hdr[50],
 
                         // Find which geoid file to use, based on lat/lon 
                         kk = which1(xlat, xlon, nfiles, kk, imodel, 
-                               vec_hdr, vec_ifp );
+                               vec_fnames, vec_hdr, vec_ifp );
                         if (DEBUG != 0) {
                             printf("After which1 kk = %d\n", kk);
                         }
@@ -219,6 +222,9 @@ void run_bbk(FILE* ifp, FILE* ofp, FILE** vec_ifp, GRID_HEADER vec_hdr[50],
            // Not Used    if (imodel == *)  card2[42] = 'Z';   // USGG2006
                             if (imodel == 6)  card2[42] = '1';   // USGG2009
                             if (imodel == 7)  card2[42] = '2';   // GEOID09
+                            if (imodel == 11) card2[42] = '4';   // USGG2012
+                            if (imodel == 12) card2[42] = '5';   // GEOID12A
+                            if (imodel == 13) card2[42] = '6';   // GEOID12B
 
                             if (ofp) {
                                 fprintf(ofp, "%s", card2);
@@ -232,7 +238,7 @@ void run_bbk(FILE* ifp, FILE* ofp, FILE** vec_ifp, GRID_HEADER vec_hdr[50],
                             continue;
                         }
 
-                    }//~if( strncmp(card2[11], card[11], 4) == 0 ) { 
+                    }//~if( strncmp(card2[11], card[11], 4) == 0 )  
 
                     // If this is NOT the associated *86* record, delete
                     // it and make a new *86* record
@@ -241,7 +247,7 @@ void run_bbk(FILE* ifp, FILE* ofp, FILE** vec_ifp, GRID_HEADER vec_hdr[50],
 
                         // Find geoid file to use, based on input lat/lon 
                         kk = which1(xlat, xlon, nfiles, kk, imodel, 
-                               vec_hdr, vec_ifp );
+                               vec_fnames, vec_hdr, vec_ifp );
 
                         if (kk == -1) {
                             // If not in any grid area, set = -999
@@ -291,6 +297,9 @@ void run_bbk(FILE* ifp, FILE* ofp, FILE** vec_ifp, GRID_HEADER vec_hdr[50],
            // Not Used    if (imodel == *)  card2[42] = 'Z';   // USGG2006
                             if (imodel == 6)  card86[42] = '1';  // USGG2009
                             if (imodel == 7)  card86[42] = '2';  // GEOID09
+                            if (imodel == 11) card86[42] = '4';   // USGG2012
+                            if (imodel == 12) card86[42] = '5';   // GEOID12A
+                            if (imodel == 13) card86[42] = '6';   // GEOID12B
 
                             if (ofp) {
                                 fprintf(ofp, "%s\n", card86);
@@ -301,7 +310,7 @@ void run_bbk(FILE* ifp, FILE* ofp, FILE** vec_ifp, GRID_HEADER vec_hdr[50],
                             ++jjj;
                             continue;
 
-                        }//~if (kk == -1) {
+                        }//~if (kk == -1) 
 
                     }//~if (card2.compare(11,4, card,11,4) == 0)
 
@@ -323,7 +332,7 @@ void run_bbk(FILE* ifp, FILE* ofp, FILE** vec_ifp, GRID_HEADER vec_hdr[50],
                 &&  (strncmp(&card2[7], "86", 2) != 0) ) { 
 
                     // Find geoid file to use, based on input lat/lon 
-                    kk = which1(xlat, xlon, nfiles, kk, imodel, vec_hdr,vec_ifp);
+                    kk = which1(xlat, xlon, nfiles, kk, imodel, vec_fnames, vec_hdr,vec_ifp);
 
                     if (kk == -1) {
                         // If not in any of our grid areas, set to -999
@@ -391,7 +400,7 @@ void run_bbk(FILE* ifp, FILE* ofp, FILE** vec_ifp, GRID_HEADER vec_hdr[50],
                 //         and then go to the 'end report' phase
 
                 // Find geoid file to use, based on input lat/lon 
-                kk = which1(xlat, xlon, nfiles, kk, imodel, vec_hdr,vec_ifp);
+                kk = which1(xlat, xlon, nfiles, kk, imodel, vec_fnames, vec_hdr,vec_ifp);
 
                 // If the point isn't in any of our grid areas, set to -999
                 if (kk == -1) {
@@ -443,11 +452,14 @@ void run_bbk(FILE* ifp, FILE* ofp, FILE** vec_ifp, GRID_HEADER vec_hdr[50],
                 strncpy( &card86[35], ight_c, 7);
 
                 if (ofp) {
-                    fprintf(ofp, "%s\n", card86);
+                   //if (strncmp(ight_c, "-999000",7)!=0) {
+                      fprintf(ofp, "%s\n", card86);
+                   //}
                 }
 
                 strncpy(card,  "\0", 90);
                 strncpy(card2, "\0", 90);
+                jjj=1;
             }//~while (jjj == 0)
 
         }//~if ( card.compare(7, 2, "80") != 0)

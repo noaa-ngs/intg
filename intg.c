@@ -1,8 +1,8 @@
 // %P%
 // ----- constants ---------------------------------------------------
-static const char SCCSID[]="$Id: intg.c 44021 2010-07-12 19:42:59Z Srinivas.Reddy $	20$Date: 2010/06/21 16:47:51 $ NGS";
-static const char PGMVER[]="$Revision: 44021 $";
-static const char PGMDAT[]="20$Date: 2010/06/21 16:47:51 $";
+static const char SCCSID[]="$Id: intg.c 82438 2015-02-23 17:39:09Z bruce.tran $	20$Date: 2010/06/21 16:47:51 $ NGS";
+static const char PGMVER[]="3.2";
+static const char PGMDAT[]="2015/01/22";
 static const int  DEBUG = 0;           // diagnostics print if != 0
 static const int  MEM_STEP = 40;       // dynamic allocation increment
 
@@ -28,12 +28,13 @@ static const int  MEM_STEP = 40;       // dynamic allocation increment
 #include "getdir_geoid.h"
 #include "which1.h"
 #include "getgrd_geoid.h"
+#include "getgrd_vardis.h"
 #include "getheaders.h"
 #include "intro.h"
 #include "interg.h"
+#include "interg_idw.h"
 #include "run_bbk.h"
 #include "trim_c.h"
-#include "which1.h"
 
 
 /*********************************************************************
@@ -73,26 +74,32 @@ static const int  MEM_STEP = 40;       // dynamic allocation increment
 FILE *efp;
 char old_cluster_rec[255];
 int fatal_error;
-int   vc_unit; 
+int   vc_unit;
 int   car97_unit;
 
 int main( const int argc, const char* argv[] ) {
 /*******************************************************************************
 * NGS Program INTG - "INTerpolate Geoid"
 * Interpolates the geoid height for a user specified position and geoid model.
-* Estimates within gridded data models use spline or bilinear interpolation. 
-* 
+* Estimates within gridded data models use spline or bilinear interpolation.
+*
 * Grided data model files (*.bin) are direct access, unformatted, binary format.
 * The order of bytes in the geoid model data files are
 * --- depends on which platform the file was created ---
-* Platform dependant endian condition is corrected for the binary data. 
+* Platform dependant endian condition is corrected for the binary data.
 *******************************************************************************/
     FILE* ifp;
     FILE* ofp;
-    FILE* vec_ifp[50];            // vector of FILE*
-    char  vec_fnames[50][256];    // vector of filenames
+    FILE* vec_ifp[50];            // vector of FILE* of height grids
+    FILE* var_ifp[50];            // vector of FILE* of variance grids
+    FILE* dis_ifp[50];            // vector of FILE* of distance grids
+    char  vec_fnames[50][256];    // vector of filenames of height grids
+    char  var_fnames[50][256];    // vector of filenames of variance grids
+    char  dis_fnames[50][256];    // vector of filenames of distance grids
 
     GRID_HEADER vec_hdr[50];      // vector of header file data
+    GRID_HEADER var_hdr[50];      // vector of header file data
+    GRID_HEADER dis_hdr[50];      // vector of header file data
     DATASET1*   vec_data;  // ptr to vector of lat-lon-text input data
 
     char    dash70[]="----------------------------------------------------------------------";
@@ -102,7 +109,7 @@ int main( const int argc, const char* argv[] ) {
     char    dirnam[256];
     char    rec_in[90];
     char    ifname[256];  //  input file name
-    char    ofname[256];  // output file name   
+    char    ofname[256];  // output file name
     char    ofyn[2];
     char    cinput[42];
     char    text[42];
@@ -112,11 +119,11 @@ int main( const int argc, const char* argv[] ) {
 
     // Variables for statistics of the run
     double  minght =  999999.0; // smallest geoid value
-    double  minlat =      90.0;    // lat at min location 
-    double  minlon =     360.0;    // lon at min location 
+    double  minlat =      90.0;    // lat at min location
+    double  minlon =     360.0;    // lon at min location
     double  maxght = -999999.0; // largest  geoid value
-    double  maxlat =     -90.0;    // lat at max location 
-    double  maxlon =    -180.0;    // lon at max location 
+    double  maxlat =     -90.0;    // lat at max location
+    double  maxlon =    -180.0;    // lon at max location
     double  xn     = -999999.0;    // northernmost lat
     double  xs     =  999990.0;   // southernmost lat
     double  xe     = -999999.0;    // easternmost lon
@@ -126,6 +133,9 @@ int main( const int argc, const char* argv[] ) {
     double  std    = 0.0;
     double  rms    = 0.0;
     double  geoidHt= 0.0;         // solution
+    double  variance = -999.;
+    double  stddev = -999.;
+    double  distance = -999.;
 
     int  iform  = 0;
     int  ipos;
@@ -133,12 +143,13 @@ int main( const int argc, const char* argv[] ) {
     int  kount  = 0;
     int  mem_limit = 0;
     int  kk  = 0;
+    int  mm  = 0;
     int  iii = 0;
     int  iinput;
     int  imodel;
     int  is_subr;
-    int  nfiles;
-    int  nff;
+    int  nfiles, nvdfiles;
+    int  nff, nvff, ndff;
     int  ii;
     int  jj;
     int  poseast = 0;  // Assume west longitude
@@ -159,13 +170,15 @@ int main( const int argc, const char* argv[] ) {
 
     for (ii = 0; ii < 50; ++ii) {
         strncpy(vec_fnames[ii], "\0", 256);
+        strncpy(var_fnames[ii], "\0", 256);
+        strncpy(dis_fnames[ii], "\0", 256);
     }
 
     // ---------------------------------------------------------
     // Write out the introductory/disclaimer screens
     // ---------------------------------------------------------
-    // printf("NGS program intg    version: %s     date(ccyy/mm/dd): %s\n", 
-    //         PGMVER, PGMDAT); 
+    // printf("NGS program intg    version: %s     date(ccyy/mm/dd): %s\n",
+    //         PGMVER, PGMDAT);
 
     intro( PGMVER, PGMDAT );    // prints intro and disclaimer to stdout
 
@@ -181,8 +194,11 @@ Which geoid model do you wish to use?\n\n\
    1 = GEOID99                  2 = G99SSS\n\
    3 = GEOID03                  4 = USGG2003\n\
    5 = GEOID06                  6 = USGG2009\n\
-   7 = GEOID09 \n\
+   7 = GEOID09\n\
    9 = Experimental Geoid (XUSHG)\n\n\
+   11 = USGG2012\n\
+   12 = GEOID12A\n\
+   13 = GEOID12B\n\
   99 = END PROGRAM\n\n\
    -> ");
         strncpy(cinput, "\0", 42);
@@ -191,10 +207,13 @@ Which geoid model do you wish to use?\n\n\
 
         if (imodel == 99) return(0);
 
-        if ((imodel >= 1 && imodel <= 7)  || imodel == 9) {  
+        if ((imodel >= 1 && imodel <= 7)  || imodel == 9 || imodel == 11 || imodel == 12 || imodel == 13) {
             ++iii;
         } else {
             fprintf(stderr,"Error: Not a valid response. Try again.\n");
+#ifndef NGS_PC_ENV
+            exit(-1);
+#endif
         }
     }//~while
 
@@ -211,8 +230,10 @@ Which geoid model do you wish to use?\n\n\
     // IS_SUBR : run as subroutine: false=0; true=(not zero) (c std notation)
     // ---------------------------------------------------------
     is_subr = 0;
-    getgrd_geoid(imodel, dirnam, is_subr, &nfiles, &nff, 
+    getgrd_geoid(imodel, dirnam, is_subr, &nfiles, &nff,
                  vec_fnames, vec_ifp);
+    getgrd_vardis(imodel, dirnam, is_subr, &nvdfiles, &nvff, &ndff,
+                 var_fnames, dis_fnames, var_ifp, dis_ifp);
 
     // ---------------------------------------------------------
     // Read the headers of all geoid files which
@@ -221,6 +242,8 @@ Which geoid model do you wish to use?\n\n\
     // Apply endian correction if required
     // ---------------------------------------------------------
     getheaders( vec_ifp, vec_hdr, nfiles );
+    getheaders( var_ifp, var_hdr, nvdfiles );
+    getheaders( dis_ifp, dis_hdr, nvdfiles );
 
     // ---------------------------------------------------------
     // How to input?
@@ -242,6 +265,9 @@ How would you like to input the data? \n\
             ++iii;
         } else {
             fprintf(stderr, "Error: not an option - try again\n");
+#ifndef NGS_PC_ENV
+            exit(-1);
+#endif
         }
     }
 
@@ -274,6 +300,9 @@ Which format will you use for input? \n\
                 ++iii;
             } else {
                 fprintf(stderr, "Error: not an option - try again\n");
+#ifndef NGS_PC_ENV
+                exit(-1);
+#endif
             }
         }
     }
@@ -300,12 +329,15 @@ Which longitude convention will you use? \n\
             if (ipos == 1) {
                 poseast = 1;     // C-std: Nonzero = true
                 ++iii;
-            } 
+            }
             else if (ipos == 2) {
                 poseast = 0;
                 ++iii;
             } else {
                 fprintf(stderr, "Error: not an option - try again\n");
+#ifndef NGS_PC_ENV
+                exit(-1);
+#endif
             }
         }
     }
@@ -324,6 +356,9 @@ Which longitude convention will you use? \n\
 
             if ((ifp = fopen( ifname, "r" )) == NULL) {
                 printf("Error: Cannot find input file: %s\nTry again", ifname);
+#ifndef NGS_PC_ENV
+                exit(-1);
+#endif
             } else {
                 ++iii;
             }
@@ -361,6 +396,9 @@ Which longitude convention will you use? \n\
 
             if ((ofp = fopen(ofname, "w")) == NULL) {
                 printf("Error: File exists - try again\n");
+#ifndef NGS_PC_ENV
+                exit(-1);
+#endif
             } else {
                 ++iii;
             }
@@ -376,6 +414,9 @@ Which longitude convention will you use? \n\
     vec_data = (DATASET1*) calloc(mem_limit, sizeof(DATASET1));
     if (vec_data == NULL ) {
         fprintf(stderr, "Out of system memory - allocation fails\n");
+#ifndef NGS_PC_ENV
+        exit(-1);
+#endif
     }
 
     // -----------------------------------------------
@@ -392,8 +433,8 @@ Which longitude convention will you use? \n\
             strncpy(text, "\0", 42);
             ff1(rec_in, &xlat, &xlon, text);
 
-            // If the lat/lon values came back as -999, set the 
-            // geoid value to -999 and skip the interpolation 
+            // If the lat/lon values came back as -999, set the
+            // geoid value to -999 and skip the interpolation
             if (xlat == -999. || xlon == -999.) {
                 geoidHt = (double)-999.;
                 continue;
@@ -406,7 +447,7 @@ Which longitude convention will you use? \n\
             // Now have the lat/lon pair from input file type 2
 
             DATASET1 thisSet;
-            strncpy(thisSet.text, "\0", 42);
+            strncpy(thisSet.text, "\0", 50);
             thisSet.lat     = xlat;
             thisSet.lon     = xlon;
             thisSet.poseast = poseast;
@@ -417,9 +458,11 @@ Which longitude convention will you use? \n\
                 mem_limit += MEM_STEP;
             vec_data = (DATASET1*)realloc(vec_data, mem_limit*sizeof(DATASET1));
                 if (vec_data == NULL) {
-                    printf("Out of system memory - allocation fails\n");
+                   printf("Out of system memory - allocation fails\n");
+                   exit(-1);
                 }
             }
+            strncpy(rec_in, "\0",  90);            
         }//~while
     }//~if (iform = 1)
 
@@ -436,8 +479,8 @@ Which longitude convention will you use? \n\
             strncpy(text, "\0", 42);
             ff2(rec_in, &xlat, &xlon, text);
 
-            // If the lat/lon values came back as -999, set the 
-            // geoid value to -999 and skip the interpolation 
+            // If the lat/lon values came back as -999, set the
+            // geoid value to -999 and skip the interpolation
             if (xlat == -999. || xlon == -999.) {
                 geoidHt = (double) -999.;
                 continue;
@@ -462,18 +505,20 @@ Which longitude convention will you use? \n\
             vec_data = (DATASET1*)realloc(vec_data, mem_limit*sizeof(DATASET1));
                 if (vec_data == NULL) {
                     printf("Out of system memory - allocation fails\n");
+                    exit(-1);
                 }
             }
+            strncpy(rec_in, "\0",  90);
 
         }//~while
     }//~if (iform = 2)
 
     // -----------------------------------------------
     // Input by file, horizontal bluebook
-    // Function contains all processes. 
+    // Function contains all processes.
     // -----------------------------------------------
     else if (iform == 3) {
-        run_bbk( ifp, ofp, vec_ifp, vec_hdr, nff, imodel );
+        run_bbk( ifp, ofp, vec_ifp, vec_hdr, vec_fnames, nff, imodel );
 
         fclose(ifp);
         fclose(ofp);
@@ -504,6 +549,9 @@ Which longitude convention will you use? \n\
                 xlat = c2v(cinput, 1);
                 if (fabs(xlat + 999) < 0.001) {
                     printf("Error(501): Bad Latitude ... try again\n");
+#ifndef NGS_PC_ENV
+                    exit(-1);
+#endif
                 } else {
                     ++ii;
                 }
@@ -524,6 +572,9 @@ Which longitude convention will you use? \n\
                 xlon = c2v(cinput, 2);
                 if (fabs(xlon + 999) < 0.001) {
                     printf("Error(501): Bad Longitude ... try again\n");
+#ifndef NGS_PC_ENV
+                    exit(-1);
+#endif
                 } else {
                     ++ii;
                 }
@@ -545,10 +596,11 @@ Which longitude convention will you use? \n\
             ++kount;
             if (kount >= mem_limit) {
                 mem_limit += MEM_STEP;
-                vec_data = 
+                vec_data =
                     (DATASET1*)realloc(vec_data, mem_limit * sizeof(DATASET1));
                 if (vec_data == NULL) {
                     printf("Out of system memory - allocation fails\n");
+                    exit(-1);
                 }
             }
 
@@ -583,25 +635,29 @@ Which longitude convention will you use? \n\
         xlon = vec_data[ii].lon;
 
         if (DEBUG != 0) {
-            printf("kount = %d  ii = %d    xlat  = %lf   xlon = %lf\n", 
+            printf("kount = %d  ii = %d    xlat  = %lf   xlon = %lf\n",
                     kount, ii, xlat, xlon);
         }
 
-        // If the lat/lon values came back as -999, set the 
-        // geoid value to -999 and skip the interpolation 
+        // If the lat/lon values came back as -999, set the
+        // geoid value to -999 and skip the interpolation
         if (xlat == -999. || xlon == -999.) {
             geoidHt = (double) -999.;
+            stddev = (double) -999.;
+            distance = (double) -999.;
             continue;
         } else {
 
             // Find which geoid file to use, based on the lat/lon input
-            kk = which1( xlat, xlon, nfiles, kk, imodel, vec_hdr, vec_ifp );
+            kk = which1( xlat, xlon, nfiles, kk, imodel, vec_fnames, vec_hdr, vec_ifp );
 
             if (DEBUG != 0) { printf("kk = %d \n", kk); }
 
             // If the point isn't in any of our grid areas, set to -999
             if (kk == -1) {
                 geoidHt = (double) -999.;
+                stddev = (double) -999.;
+                distance = (double) -999.;
 
             // Otherwise, do the interpolation
             } else {
@@ -612,6 +668,26 @@ Which longitude convention will you use? \n\
                 geoidHt = interg(xlat, xlon, vec_hdr, vec_ifp, kk );
 
                 if (DEBUG != 0) { printf("geoidHt = %lf \n", geoidHt ); }
+
+                //  If we have variance and distance grids available,
+                //  interpolate from those as well
+                stddev = (double) -999.;
+                distance = (double) -999.;
+                if ( nvdfiles > 0 ) {
+                   mm = which1( xlat, xlon, nvdfiles, mm, imodel, var_fnames,
+                                var_hdr, var_ifp );
+                   if ( mm != -1 ) {
+                      variance = interg_idw(xlat, xlon, var_hdr, var_ifp, mm );
+                      stddev = sqrt(variance);
+                   }
+
+                   mm = which1( xlat, xlon, nvdfiles, mm, imodel, dis_fnames,
+                                dis_hdr, dis_ifp );
+                   if ( mm != -1 ) {
+                      distance = interg_idw(xlat, xlon, dis_hdr, dis_ifp, mm );
+                   }
+                }
+                //printf("SAGout: %lf +/-%lf m %lf \n",geoidHt,stddev,distance);
 
                 ++keep;
                 ave += geoidHt;
@@ -634,21 +710,21 @@ Which longitude convention will you use? \n\
             }
 
             if (strcmp(ofyn, "Y") == 0 || strcmp(ofyn, "y") == 0) {
-                if      (iform == 1)  ff1out(ofp, vec_data[ii], geoidHt);
-                else if (iform == 2)  ff2out(ofp, vec_data[ii], geoidHt);
+                if      (iform == 1)  ff1out(ofp, vec_data[ii], geoidHt, imodel, stddev, distance);
+                else if (iform == 2)  ff2out(ofp, vec_data[ii], geoidHt, imodel, stddev, distance);
                 // else if (iform == 3)  // bluebook - do nothing -----
 
-                else if (iinput == 1) ff1out(ofp, vec_data[ii], geoidHt);
+                else if (iinput == 1) ff1out(ofp, vec_data[ii], geoidHt, imodel, stddev, distance);
 
             }//~if(ofyn)
 
-            if( (iinput == 1) && (strcmp(ofyn, "Y") != 0) ){ 
-                ff4out(ofp, vec_data[ii], geoidHt);
+            if( (iinput == 1) && (strcmp(ofyn, "Y") != 0) ){
+                ff4out(ofp, vec_data[ii], geoidHt, imodel, stddev, distance);
             }
 
 
             // if( (iinput == 1) && (outfil == 1) )
-            //     ff4out(ofp, vec_data[ii], geoidHt);
+            //     ff4out(ofp, vec_data[ii], geoidHt, imodel, stddev, distance);
 
         }//~if(xlat == -999. || xlon == -999.)
 
@@ -666,7 +742,7 @@ Which longitude convention will you use? \n\
     // =============================================================
     // This is for input file format = 1
     // When finished, give a little report to the screen and end program.
-    // 
+    //
     ave = ave/keep;
     rms = sqrt(rms/keep);
     if (keep > 1) {
@@ -694,8 +770,8 @@ FINAL REPORT: \n\
     Lat/Lon of Maximum  : %10.6lf  %10.6lf \n\
   Average Geoid Height  :  %8.3lf \n\
   Standard Deviation    :  %8.3lf \n\
-  Root Mean Square      :  %8.3lf \n", 
-            (360. - xw), (360. - xe), minght, minlat, (360. - minlon), 
+  Root Mean Square      :  %8.3lf \n",
+            (360. - xw), (360. - xe), minght, minlat, (360. - minlon),
             maxght, maxlat, (360. - maxlon), ave, std, rms);
 
     } else {       // using East longitude
@@ -709,8 +785,8 @@ FINAL REPORT: \n\
     Lat/Lon of Maximum  : %10.6lf  %10.6lf \n\
   Average Geoid Height  :  %8.3lf \n\
   Standard Deviation    :  %8.3lf \n\
-  Root Mean Square      :  %8.3lf \n", 
-            xw, xe, minght, minlat, minlon, 
+  Root Mean Square      :  %8.3lf \n",
+            xw, xe, minght, minlat, minlon,
             maxght, maxlat, maxlon, ave, std, rms);
 
     }

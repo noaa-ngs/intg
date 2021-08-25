@@ -1,7 +1,7 @@
 #ifndef TRIM_C_H
 #define TRIM_C_H
 
-#pragma ident "$Id: trim_c.h 34347 2010-06-09 21:03:58Z Srinivas.Reddy $	20$Date: 2010/06/03 15:23:52 $ NGS"
+#pragma ident "$Id: trim_c.h 63417 2012-06-25 20:07:13Z Srinivas.Reddy $	20$Date: 2010/06/03 15:23:52 $ NGS"
 #include <string.h>
 
 //-----------------------------------------------------------------------------
@@ -15,6 +15,20 @@
 //  out- str : ptr to the trimmed string by reference         
 //  ret- str : ptr to the trimmed string by value
 //-----------------------------------------------------------------------------
-char* trim_c(char* str, const char w);
+#ifdef NGS_PC_ENV
+      char* trim_c(char* str, const char w);
+#else
+
+#  ifdef __cplusplus
+    extern "C" {
+#  endif
+
+      char* trim_c(char* str, const char w);
+
+#  ifdef __cplusplus
+   }
+#  endif
+
+#endif //PC_ENV 
 
 #endif // end TRIM_C_H

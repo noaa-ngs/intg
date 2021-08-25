@@ -1,6 +1,6 @@
 // %P%
 // ----- constants ---------------------------------------------------
-static const char SCCSID[]="$Id: ff1out.c 43833 2010-07-12 16:45:25Z bruce.tran $	20$Date: 2010/06/21 16:45:45 $ NGS";
+static const char SCCSID[]="$Id: ff1out.c 82438 2015-02-23 17:39:09Z bruce.tran $	20$Date: 2010/06/21 16:45:45 $ NGS";
 static const int  DEBUG = 0;           // diagnostics print if != 0
 
 // ----- standard library --------------------------------------------
@@ -16,7 +16,8 @@ static const int  DEBUG = 0;           // diagnostics print if != 0
 #include "dd_dms.h"
 
 
-int ff1out(FILE* ofp, DATASET1 vec_data, double geoidHt) {
+int ff1out(FILE* ofp, DATASET1 vec_data, double geoidHt, int imodel, 
+           double stddev, double distance) {
 /*******************************************************************************
 * Writes a "Free Format, (For Geoid) Type 1" record to an output file
 *   in - ofp      : pointer to output file
@@ -35,6 +36,8 @@ int ff1out(FILE* ofp, DATASET1 vec_data, double geoidHt) {
     char  londeg_c[12];
     char  lonmin_c[12];
     char  lonsec_c[12];
+    char  cstddev[9];
+    char  cdist[9];
 
     int   latdeg, latmin;
     int   londeg, lonmin;
@@ -49,7 +52,8 @@ int ff1out(FILE* ofp, DATASET1 vec_data, double geoidHt) {
     strncpy(londeg_c, "\0", 12);
     strncpy(lonmin_c, "\0", 12);
     strncpy(lonsec_c, "\0", 12);
-
+    strncpy(cstddev,  "\0",  9);
+    strncpy(cdist,    "\0",  9);
 
     if (DEBUG > 0) {
         printf("In ff1out  vec_data.lat = %lf  vec_data.lon = %lf\n", 
@@ -112,16 +116,42 @@ int ff1out(FILE* ofp, DATASET1 vec_data, double geoidHt) {
         }
     }
 
+    if ( stddev == -999. ) {
+       strcpy(cstddev," UNAVAIL");
+    }
+    else {
+       sprintf(cstddev,"%8.4lf",stddev);
+    }
+
+    if ( distance == -999. ) {
+       strcpy(cdist," UNAVAIL");
+    }
+    else {
+       sprintf(cdist,"%8.3lf",distance);
+    }
+
     // -----------------------------------------------
     // Print to output file (input by file form 1)  or
     // Print to display     (input by keyboard)
     // -----------------------------------------------
     if (ofp) {
+      if ( imodel == 12 || imodel == 13)
+        fprintf(ofp, "%40s%3d %2d %8.5lf %3d %2d %8.5lf %8.3lf %s\n",
+            vec_data.text, 
+            latdeg, latmin, latsec,
+            londeg, lonmin, lonsec, geoidHt, cstddev);
+      else
         fprintf(ofp, "%40s%3d %2d %8.5lf %3d %2d %8.5lf %8.3lf\n",
             vec_data.text, 
             latdeg, latmin, latsec,
             londeg, lonmin, lonsec, geoidHt);
     } /***** else {
+      if ( imodel == 12 )
+        printf(      "%40s%3d %2d %8.5lf %3d %2d %8.5lf %8.3lf %s %s\n",
+            vec_data.text, 
+            latdeg, latmin, latsec,
+            londeg, lonmin, lonsec, geoidHt, cstddev, cdist);
+      else
         printf(      "%40s%3d %2d %8.5lf %3d %2d %8.5lf %8.3lf\n",
             vec_data.text, 
             latdeg, latmin, latsec,

@@ -1,6 +1,6 @@
 // /ngslib/source/Clib_billw/SCCS/s.spline4.c
 // ----- constants ---------------------------------------------------
-static const char SCCSID[]="$Id: spline4.c 50357 2010-10-19 15:58:42Z Srinivas.Reddy $";
+static const char SCCSID[]="$Id: spline4.c 50355 2010-10-19 15:55:47Z Srinivas.Reddy $";
 static const int  DEBUG = 0;           // diagnostics print if != 0
 
 // ----- standard library --------------------------------------------

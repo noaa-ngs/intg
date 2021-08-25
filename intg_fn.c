@@ -1,6 +1,6 @@
 // %P%
 // ----- constants ---------------------------------------------------
-static const char SCCSID[]="$Id: intg_fn.c 35388 2010-06-11 14:02:16Z Srinivas.Reddy $	20$Date: 2010/03/24 14:55:26 $ NGS";
+static const char SCCSID[]="$Id: intg_fn.c 62624 2012-05-15 16:59:53Z Srinivas.Reddy $	20$Date: 2010/03/24 14:55:26 $ NGS";
 
 // ----- standard library --------------------------------------------
 #include <stdio.h>
@@ -105,7 +105,7 @@ char*  intg_fn( char* lat_c, char* lon_c, int imodel ) {
     if (lon_c[0] == 'W')  lon_dd = 360.0 - lon_dd;
 
     // Find which geoid file to use, based on the lat/lon input
-    kk = which1( lat_dd, lon_dd, nfiles, kk, imodel, vec_hdr, vec_ifp );
+    kk = which1( lat_dd, lon_dd, nfiles, kk, imodel, vec_fnames, vec_hdr, vec_ifp );
 
     if (kk == -1) {          // If the point isn't in any grid area
         geoidHt = -999.0;

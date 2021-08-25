@@ -1,6 +1,6 @@
-// %P%
+// /ngslib/source/Clib_billw/SCCS/s.bilin.c
 // ----- constants ---------------------------------------------------
-static const char SCCSID[]="$Id: bilin.c 35376 2010-06-11 13:32:28Z Srinivas.Reddy $	20$Date: 2010/04/16 08:54:41 $ NGS";
+static const char SCCSID[]="@(#)bilin.c	1.4	2010/04/23 NGS";
 static const int  DEBUG = 0;           // diagnostics print if != 0
 
 // ----- standard library --------------------------------------------
@@ -121,7 +121,7 @@ double bilin(double latdd, double londd,
     icoln_lon = lonMin + lonDelta*(icoln);    // lon just west      from londd
 
     // Find relative location of the point in the interpolation window
-    yy = (row_counter - irown);             // 1x1 window
+    yy = (row_counter - irown);               // 1x1 window
     xx = (col_counter - icoln);
 
     onemyy = 1.0 - yy;
@@ -152,7 +152,7 @@ double bilin(double latdd, double londd,
 // Extract 2x2 data array around the point 
 // and do bilinear interpolation
 // ------------------------------------------------
-//           (icoln)   ---->      (icoln+1)
+//           (icoln)   ----> East   (icoln+1)
 //
 // (irown-1)  LL ------------------------  LR
 //               |     xx        | 1mxx |
@@ -161,7 +161,7 @@ double bilin(double latdd, double londd,
 //    |          |               |      |
 //    |          |               |      |
 //    \/         |----------------      |
-//               | 1myy                 |
+//  North        | 1myy                 |
 //               |                      |
 // (irown)    UL ------------------------  UR
 //
@@ -170,12 +170,12 @@ double bilin(double latdd, double londd,
 //  Linear interpolation on or near northern edge only (1*e-4 = 0.3 arcsec)
 
     if ((latMax - latdd) < 0.0001) {
-        irec = 44L + (long)(4*( (irown-1)*lonColNum + icoln   ));
+        irec = 44L + (long)(4*( (irown  )*lonColNum + icoln   ));
         fseek(infile, irec, SEEK_SET);             // SEEK_SET := beginning
         fread((char*)&buffer, sizeof(float), 1, infile);
         LL = buffer.ff;
 
-        irec = 44L + (long)(4*( (irown-1)*lonColNum + icoln+1 ));
+        irec = 44L + (long)(4*( (irown  )*lonColNum + icoln+1 ));
         fseek(infile, irec, SEEK_SET);
         fread((char*)&buffer, sizeof(float), 1, infile);
         LR = buffer.ff;

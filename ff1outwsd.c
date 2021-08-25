@@ -1,6 +1,7 @@
 // %P%
 // ----- constants ---------------------------------------------------
-static const char SCCSID[]="$Id: ff4out.c 82036 2015-01-22 16:32:36Z bruce.tran $	20$Date: 2010/03/01 13:25:22 $ NGS";
+static const char SCCSID[]="$Id: ff1outwsd.c 67430 2012-12-18 19:09:13Z stephen.gilbert $	20$Date: 2010/06/21 16:45:45 $ NGS";
+static const int  DEBUG = 0;           // diagnostics print if != 0
 
 // ----- standard library --------------------------------------------
 #include <stdio.h>
@@ -11,21 +12,24 @@ static const char SCCSID[]="$Id: ff4out.c 82036 2015-01-22 16:32:36Z bruce.tran 
 #include "dataset1.h"
 
 // ----- functions ---------------------------------------------------
-#include "ff4out.h"
+#include "ff1outwsd.h"
 #include "dd_dms.h"
 
 
-int ff4out(FILE* ofp, DATASET1 vec_data, double geoidHt, int imodel,
-           double stddev, double distance) {
+int ff1outwsd(FILE* ofp, DATASET1 vec_data, double geoidHt, double stddev, 
+           double distance) {
 /*******************************************************************************
-* Writes a record from keyboard input
-* 
-* 
+* Writes a "Free Format, (For Geoid) Type 1" record to an output file
+*   in - ofp      : pointer to output file
+*   in - vec_data : vector containing input data
+*   in - geoidHt  : interpolated geoid height
+*   out- nothing
+*   ret- zero always
+* was: string ff1out( iinput,outfil,lout,card, poseast,xlat,xlon,val ) {
 *******************************************************************************/
-    char  space25[]="                         ";
-    char  space40[]="                                        ";
-    char  lat_dms[20];
-    char  lon_dms[20];
+    char  lat_dms[22];
+    char  lon_dms[22];
+
     char  latdeg_c[12];
     char  latmin_c[12];
     char  latsec_c[12];
@@ -40,8 +44,8 @@ int ff4out(FILE* ofp, DATASET1 vec_data, double geoidHt, int imodel,
     double latsec, lonsec;
 
     // Initialize local variables
-    strncpy(lat_dms,  "\0", 20);
-    strncpy(lon_dms,  "\0", 20);
+    strncpy(lat_dms,  "\0", 22);
+    strncpy(lon_dms,  "\0", 22);
     strncpy(latdeg_c, "\0", 12);
     strncpy(latmin_c, "\0", 12);
     strncpy(latsec_c, "\0", 12);
@@ -50,6 +54,11 @@ int ff4out(FILE* ofp, DATASET1 vec_data, double geoidHt, int imodel,
     strncpy(lonsec_c, "\0", 12);
     strncpy(cstddev,  "\0",  9);
     strncpy(cdist,    "\0",  9);
+
+    if (DEBUG > 0) {
+        printf("In ff1outwsd  vec_data.lat = %lf  vec_data.lon = %lf\n", 
+                vec_data.lat, vec_data.lon);
+    }
 
     if (vec_data.lat == -999  ||  vec_data.lon == -999) {
         latdeg = 99;
@@ -66,6 +75,10 @@ int ff4out(FILE* ofp, DATASET1 vec_data, double geoidHt, int imodel,
             dd_dms( (360.0 - vec_data.lon), lon_dms );
         } else {
             dd_dms( vec_data.lon, lon_dms );
+        }
+
+        if (DEBUG > 0) {
+            printf("In ff1outwsd lat_dms = %s  lon_dms = %s\n", lat_dms, lon_dms);
         }
 
         strncpy( latdeg_c, &lat_dms[0], 3);
@@ -118,40 +131,23 @@ int ff4out(FILE* ofp, DATASET1 vec_data, double geoidHt, int imodel,
     }
 
     // -----------------------------------------------
-    // Print to display
+    // Print to output file (input by file form 1)  or
+    // Print to display     (input by keyboard)
     // -----------------------------------------------
-    if ( imodel == 12 || imodel == 13 ) {
-       printf("\nYour Result: \n");
-       //printf("%s latitude        longitude       N         stddev distance\n", space40);
-       //printf("Station Name %s  ddd mm ss.sssss ddd mm ss.sssss  meters    meters       km\n",
-       //      space25);
-
-       //printf("%-40s%3d %2d %8.5lf %3d %2d %8.5lf %8.3lf %s %s",
-       //       vec_data.text, 
-       //       latdeg, latmin, latsec, 
-       //       londeg, lonmin, lonsec, geoidHt, cstddev, cdist);
-       printf("%s latitude        longitude       N         stddev\n", space40);
-       printf("Station Name %s  ddd mm ss.sssss ddd mm ss.sssss  meters    meters\n",
-             space25);
-
-       printf("%-40s%3d %2d %8.5lf %3d %2d %8.5lf %8.3lf %s",
-              vec_data.text, 
-              latdeg, latmin, latsec, 
-              londeg, lonmin, lonsec, geoidHt, cstddev);
+    if (ofp) {
+        fprintf(ofp, "%40s%3d %2d %8.5lf %3d %2d %8.5lf %8.3lf %s %s\n",
+            vec_data.text, 
+            latdeg, latmin, latsec,
+            londeg, lonmin, lonsec, geoidHt, cstddev, cdist);
+    } /***** else {
+        printf(      "%40s%3d %2d %8.5lf %3d %2d %8.5lf %8.3lf %s %s\n",
+            vec_data.text, 
+            latdeg, latmin, latsec,
+            londeg, lonmin, lonsec, geoidHt, cstddev, cdist);
     }
-    else {
-       printf("\nYour Result: \n");
-       printf("%s latitude        longitude       N \n", space40);
-       printf("Station Name %s  ddd mm ss.sssss ddd mm ss.sssss  meters\n",
-             space25);
-
-       printf("%-40s%3d %2d %8.5lf %3d %2d %8.5lf %8.3lf",
-           vec_data.text,
-           latdeg, latmin, latsec,
-           londeg, lonmin, lonsec, geoidHt);
-    }
+      *****/
 
     return( 0 );
 
-}//~ff4out
+}//~ff1outwsd
 

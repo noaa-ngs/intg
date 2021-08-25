@@ -1,7 +1,7 @@
-/* SccsID = "$Id: myconst.h 49214 2010-09-16 13:49:21Z bruce.tran $	%P%"  */
-#if !defined(__myconst)
-#define __myconst
-#pragma ident "$Id: myconst.h 49214 2010-09-16 13:49:21Z bruce.tran $      20$Date: 2010/06/03 15:23:32 $ NGS"
+/* SccsID = "$Id: myconst.h 62154 2012-04-25 20:11:07Z Srinivas.Reddy $	%P%"  */
+#ifndef __MYCONST__
+#define __MYCONST__
+#pragma ident "$Id: myconst.h 62154 2012-04-25 20:11:07Z Srinivas.Reddy $      20$Date: 2010/06/03 15:23:32 $ NGS"
 
 #include <stdio.h>
 #include <math.h>
@@ -32,8 +32,8 @@
 #define MAX_VERT                   100
 #define MAX_LIST                  4500 // Big for 17137
 #define MAX_ASTRO                  300
-#define MAX_GRP                   5000 // was 20000 for GPS1751/B
-#define MAX_VECTORS               5000
+#define MAX_GRP                   10000 // was 20000 for GPS1751/B
+#define MAX_VECTORS               18000
 #define MAX_CORR                  2000
 #define MAX_COV                    600
 #define MAX_CORR_LOAD            80000

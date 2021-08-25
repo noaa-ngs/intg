@@ -1,6 +1,8 @@
 // %P%
 // ----- constants ---------------------------------------------------
-static const char SCCSID[]="$Id: getgrd_geoid.c 35381 2010-06-11 13:32:48Z Srinivas.Reddy $	20$Date: 2010/04/26 13:51:08 $ NGS";
+// $Rev:: 8#$
+// $Date::  $
+// $Id:: ge#$
 
 // ----- standard library --------------------------------------------
 #include <stdio.h>
@@ -389,44 +391,76 @@ void getgrd_geoid(int imodel, char* dirnam, int is_subr, int* nfiles, int* nff,
     // The GEOID09 file names
     // -----------------------------------------------------
     } else if (imodel == 7) {
-        // *nfiles = 16;      PR/VI NOT YET RELEASED
-        *nfiles = 15;
+        *nfiles = 16;
+        int numVecFiles = 0;
 
-        // First 8 files are CONUS -----
-        for (ii = 1; ii <= 8; ++ii) {
-            strncpy(this_fname, "\0", 256);
-            strncpy(cval,       "\0",   3);
-            sprintf(cval, "%02d", ii);
-            if (dirlen > 0) {
-                strcpy(this_fname, dirnam);
+        // CONUS -----
+        // Attempt to open the one file model
+        FILE* ifp_conus;
+        strncpy(this_fname, "\0", 256);
+        if (dirlen > 0) {
+            strcpy(this_fname, dirnam);
+        }
+        strcat(this_fname, "GEOID09_conus.bin");
+
+        if ((ifp_conus = fopen(this_fname, "rb")) != NULL) {
+            *nfiles -= 7;
+            strcpy(vec_fnames[numVecFiles++], this_fname);
+	    fclose(ifp_conus);
+
+        } else {
+            // First 8 files are CONUS -----
+            for (ii = 1; ii <= 8; ++ii) {
+                strncpy(this_fname, "\0", 256);
+                strncpy(cval,       "\0",   3);
+                sprintf(cval, "%02d", ii);
+                if (dirlen > 0) {
+                    strcpy(this_fname, dirnam);
+                }
+                strcat(this_fname, "g2009u");
+                strcat(this_fname, cval);
+                strcat(this_fname, suffix);
+
+                strcpy(vec_fnames[numVecFiles++], this_fname);
             }
-            strcat(this_fname, "g2009u");
-            strcat(this_fname, cval);
-            strcat(this_fname, suffix);
-
-            strcpy(vec_fnames[ii-1], this_fname);
         }
 
-        // Next 4 files are ALASKA -----
-        for (ii = 9; ii <= 12; ++ii) {
-            strncpy(this_fname, "\0", 256);
-            strncpy(cval,       "\0",   3);
-            sprintf(cval, "%02d", ii-8);
-            if (dirlen > 0) {
-                strcpy(this_fname, dirnam);
-            }
-            strcat(this_fname, "g2009a");
-            strcat(this_fname, cval);
-            strcat(this_fname, suffix);
+        // Alaska -----
+        // Attempt to open the one file model
+        FILE* ifp_ak;
+        strncpy(this_fname, "\0", 256);
+        if (dirlen > 0) {
+            strcpy(this_fname, dirnam);
+        }
+        strcat(this_fname, "GEOID09_ak.bin");
 
-            strcpy(vec_fnames[ii-1], this_fname);
+        if ((ifp_ak = fopen(this_fname, "rb")) != NULL) {
+            *nfiles -= 3;
+            strcpy(vec_fnames[numVecFiles++], this_fname);
+	    fclose(ifp_ak);
+
+        } else {
+            // Next 4 files are ALASKA -----
+            for (ii = 1; ii <= 4; ++ii) {
+                strncpy(this_fname, "\0", 256);
+                strncpy(cval,       "\0",   3);
+                sprintf(cval, "%02d", ii);
+                if (dirlen > 0) {
+                    strcpy(this_fname, dirnam);
+                }
+                strcat(this_fname, "g2009a");
+                strcat(this_fname, cval);
+                strcat(this_fname, suffix);
+
+                strcpy(vec_fnames[numVecFiles++], this_fname);
+            }
         }
 
         // Next 1 file is HAWAII -----
-        for (ii = 13; ii <= 13; ++ii) {
+        for (ii = 1; ii <= 1; ++ii) {
             strncpy(this_fname, "\0", 256);
             strncpy(cval,       "\0",   3);
-            sprintf(cval, "%02d", ii-12);
+            sprintf(cval, "%02d", ii);
             if (dirlen > 0) {
                 strcpy(this_fname, dirnam);
             }
@@ -434,14 +468,14 @@ void getgrd_geoid(int imodel, char* dirnam, int is_subr, int* nfiles, int* nff,
             strcat(this_fname, cval);
             strcat(this_fname, suffix);
 
-            strcpy(vec_fnames[ii-1], this_fname);
+            strcpy(vec_fnames[numVecFiles++], this_fname);
         }
 
         // Next 1 file is GUAM - NORTHERN MARIANAS -----
-        for (ii = 14; ii <= 14; ++ii) {
+        for (ii = 1; ii <= 1; ++ii) {
             strncpy(this_fname, "\0", 256);
             strncpy(cval,       "\0",   3);
-            sprintf(cval, "%02d", ii-13);
+            sprintf(cval, "%02d", ii);
             if (dirlen > 0) {
                 strcpy(this_fname, dirnam);
             }
@@ -449,14 +483,14 @@ void getgrd_geoid(int imodel, char* dirnam, int is_subr, int* nfiles, int* nff,
             strcat(this_fname, cval);
             strcat(this_fname, suffix);
 
-            strcpy(vec_fnames[ii-1], this_fname);
+            strcpy(vec_fnames[numVecFiles++], this_fname);
         }
 
         // Next 1 file is SAMOA -----
-        for (ii = 15; ii <= 15; ++ii) {
+        for (ii = 1; ii <= 1; ++ii) {
             strncpy(this_fname, "\0", 256);
             strncpy(cval,       "\0",   3);
-            sprintf(cval, "%02d", ii-14);
+            sprintf(cval, "%02d", ii);
             if (dirlen > 0) {
                 strcpy(this_fname, dirnam);
             }
@@ -464,15 +498,14 @@ void getgrd_geoid(int imodel, char* dirnam, int is_subr, int* nfiles, int* nff,
             strcat(this_fname, cval);
             strcat(this_fname, suffix);
 
-            strcpy(vec_fnames[ii-1], this_fname);
+            strcpy(vec_fnames[numVecFiles++], this_fname);
         }
 
-    /***********************************************
         // Next 1 file is PR/VI -----
-        for (ii = 16; ii <= 16; ++ii) {
+        for (ii = 1; ii <= 1; ++ii) {
             strncpy(this_fname, "\0", 256);
             strncpy(cval,       "\0",   3);
-            sprintf(cval, "%02d", ii-15);
+            sprintf(cval, "%02d", ii);
             if (dirlen > 0) {
                 strcpy(this_fname, dirnam);
             }
@@ -480,9 +513,10 @@ void getgrd_geoid(int imodel, char* dirnam, int is_subr, int* nfiles, int* nff,
             strcat(this_fname, cval);
             strcat(this_fname, suffix);
 
-            strcpy(vec_fnames[ii-1], this_fname);
+            strcpy(vec_fnames[numVecFiles++], this_fname);
         }
-    ***********************************************/
+
+    // above two FILE declarations go out of scope after next statement
 
     // -----------------------------------------------------
     // Experimental Geoid: XXUSG
@@ -503,6 +537,383 @@ void getgrd_geoid(int imodel, char* dirnam, int is_subr, int* nfiles, int* nff,
             strcat(this_fname, suffix);
 
             strcpy(vec_fnames[ii-1], this_fname);
+        }
+
+    // -----------------------------------------------------
+    // The USGG2012 file names
+    // -----------------------------------------------------
+    } else if (imodel == 11) {
+        *nfiles = 16;
+        int numVecFiles = 0;
+
+        // CONUS -----
+        // Attempt to open the one file model
+        FILE* ifp_conus;
+        strncpy(this_fname, "\0", 256);
+        if (dirlen > 0) {
+            strcpy(this_fname, dirnam);
+        }
+        strcat(this_fname, "s2012u00.bin");
+
+        if ((ifp_conus = fopen(this_fname, "rb")) != NULL) {
+            *nfiles -= 7;
+            strcpy(vec_fnames[numVecFiles++], this_fname);
+	    fclose(ifp_conus);
+
+        } else {
+            // First 8 files are CONUS -----
+            for (ii = 1; ii <= 8; ++ii) {
+                strncpy(this_fname, "\0", 256);
+                strncpy(cval,       "\0",   3);
+                sprintf(cval, "%02d", ii);
+                if (dirlen > 0) {
+                    strcpy(this_fname, dirnam);
+                }
+                strcat(this_fname, "s2012u");
+                strcat(this_fname, cval);
+                strcat(this_fname, suffix);
+
+                strcpy(vec_fnames[numVecFiles++], this_fname);
+            }
+        }
+
+        // Alaska -----
+        // Attempt to open the one file model
+        FILE* ifp_ak;
+        strncpy(this_fname, "\0", 256);
+        if (dirlen > 0) {
+            strcpy(this_fname, dirnam);
+        }
+        strcat(this_fname, "s2012b00.bin");
+
+        if ((ifp_ak = fopen(this_fname, "rb")) != NULL) {
+            *nfiles -= 3;
+            strcpy(vec_fnames[numVecFiles++], this_fname);
+	    fclose(ifp_ak);
+
+        } else {
+            // Next 4 files are ALASKA -----
+            for (ii = 1; ii <= 4; ++ii) {
+                strncpy(this_fname, "\0", 256);
+                strncpy(cval,       "\0",   3);
+                sprintf(cval, "%02d", ii);
+                if (dirlen > 0) {
+                    strcpy(this_fname, dirnam);
+                }
+                strcat(this_fname, "s2012b");
+                strcat(this_fname, cval);
+                strcat(this_fname, suffix);
+
+                strcpy(vec_fnames[numVecFiles++], this_fname);
+            }
+        }
+
+        // Next 1 file is HAWAII -----
+        for (ii = 1; ii <= 1; ++ii) {
+            strncpy(this_fname, "\0", 256);
+            strncpy(cval,       "\0",   3);
+            sprintf(cval, "%02d", ii);
+            if (dirlen > 0) {
+                strcpy(this_fname, dirnam);
+            }
+            strcat(this_fname, "s2012h00");
+            strcat(this_fname, suffix);
+
+            strcpy(vec_fnames[numVecFiles++], this_fname);
+        }
+
+        // Next 1 file is GUAM - NORTHERN MARIANAS -----
+        for (ii = 1; ii <= 1; ++ii) {
+            strncpy(this_fname, "\0", 256);
+            strncpy(cval,       "\0",   3);
+            sprintf(cval, "%02d", ii);
+            if (dirlen > 0) {
+                strcpy(this_fname, dirnam);
+            }
+            strcat(this_fname, "s2012g00");
+            strcat(this_fname, suffix);
+
+            strcpy(vec_fnames[numVecFiles++], this_fname);
+        }
+
+        // Next 1 file is SAMOA -----
+        for (ii = 1; ii <= 1; ++ii) {
+            strncpy(this_fname, "\0", 256);
+            strncpy(cval,       "\0",   3);
+            sprintf(cval, "%02d", ii);
+            if (dirlen > 0) {
+                strcpy(this_fname, dirnam);
+            }
+            strcat(this_fname, "s2012s00");
+            strcat(this_fname, suffix);
+
+            strcpy(vec_fnames[numVecFiles++], this_fname);
+        }
+
+        // Next 1 file is PR/VI -----
+        for (ii = 1; ii <= 1; ++ii) {
+            strncpy(this_fname, "\0", 256);
+            strncpy(cval,       "\0",   3);
+            sprintf(cval, "%02d", ii);
+            if (dirlen > 0) {
+                strcpy(this_fname, dirnam);
+            }
+            strcat(this_fname, "s2012p00");
+            strcat(this_fname, suffix);
+
+            strcpy(vec_fnames[numVecFiles++], this_fname);
+        }
+
+    // above two FILE declarations go out of scope after next statement
+
+    // -----------------------------------------------------
+    // The GEOID12A file names
+    // -----------------------------------------------------
+    } else if (imodel == 12) {
+        *nfiles = 16;
+        int numVecFiles = 0;
+
+        // CONUS -----
+        // Attempt to open the one file model
+        FILE* ifp_conus;
+        strncpy(this_fname, "\0", 256);
+        if (dirlen > 0) {
+            strcpy(this_fname, dirnam);
+        }
+        strcat(this_fname, "g2012au0.bin");
+
+        if ((ifp_conus = fopen(this_fname, "rb")) != NULL) {
+            *nfiles -= 7;
+            strcpy(vec_fnames[numVecFiles++], this_fname);
+	    fclose(ifp_conus);
+
+        } else {
+            // First 8 files are CONUS -----
+            for (ii = 1; ii <= 8; ++ii) {
+                strncpy(this_fname, "\0", 256);
+                strncpy(cval,       "\0",   3);
+                sprintf(cval, "%01d", ii);
+                if (dirlen > 0) {
+                    strcpy(this_fname, dirnam);
+                }
+                strcat(this_fname, "g2012au");
+                strcat(this_fname, cval);
+                strcat(this_fname, suffix);
+
+                strcpy(vec_fnames[numVecFiles++], this_fname);
+            }
+        }
+
+        // Alaska -----
+        // Attempt to open the one file model
+        FILE* ifp_ak;
+        strncpy(this_fname, "\0", 256);
+        if (dirlen > 0) {
+            strcpy(this_fname, dirnam);
+        }
+        strcat(this_fname, "g2012aa0.bin");
+
+        if ((ifp_ak = fopen(this_fname, "rb")) != NULL) {
+            *nfiles -= 3;
+            strcpy(vec_fnames[numVecFiles++], this_fname);
+	    fclose(ifp_ak);
+
+        } else {
+            // Next 4 files are ALASKA -----
+            for (ii = 1; ii <= 4; ++ii) {
+                strncpy(this_fname, "\0", 256);
+                strncpy(cval,       "\0",   3);
+                sprintf(cval, "%01d", ii);
+                if (dirlen > 0) {
+                    strcpy(this_fname, dirnam);
+                }
+                strcat(this_fname, "g2012aa");
+                strcat(this_fname, cval);
+                strcat(this_fname, suffix);
+
+                strcpy(vec_fnames[numVecFiles++], this_fname);
+            }
+        }
+
+        // Next 1 file is HAWAII -----
+        for (ii = 1; ii <= 1; ++ii) {
+            strncpy(this_fname, "\0", 256);
+            strncpy(cval,       "\0",   3);
+            sprintf(cval, "%01d", ii);
+            if (dirlen > 0) {
+                strcpy(this_fname, dirnam);
+            }
+            strcat(this_fname, "g2012ah0");
+            strcat(this_fname, suffix);
+
+            strcpy(vec_fnames[numVecFiles++], this_fname);
+        }
+
+        // Next 1 file is GUAM - NORTHERN MARIANAS -----
+        for (ii = 1; ii <= 1; ++ii) {
+            strncpy(this_fname, "\0", 256);
+            strncpy(cval,       "\0",   3);
+            sprintf(cval, "%01d", ii);
+            if (dirlen > 0) {
+                strcpy(this_fname, dirnam);
+            }
+            strcat(this_fname, "g2012ag0");
+            strcat(this_fname, suffix);
+
+            strcpy(vec_fnames[numVecFiles++], this_fname);
+        }
+
+        // Next 1 file is SAMOA -----
+        for (ii = 1; ii <= 1; ++ii) {
+            strncpy(this_fname, "\0", 256);
+            strncpy(cval,       "\0",   3);
+            sprintf(cval, "%01d", ii);
+            if (dirlen > 0) {
+                strcpy(this_fname, dirnam);
+            }
+            strcat(this_fname, "g2012as0");
+            strcat(this_fname, suffix);
+
+            strcpy(vec_fnames[numVecFiles++], this_fname);
+        }
+
+        // Next 1 file is PR/VI -----
+        for (ii = 1; ii <= 1; ++ii) {
+            strncpy(this_fname, "\0", 256);
+            strncpy(cval,       "\0",   3);
+            sprintf(cval, "%01d", ii);
+            if (dirlen > 0) {
+                strcpy(this_fname, dirnam);
+            }
+            strcat(this_fname, "g2012ap0");
+            strcat(this_fname, suffix);
+
+            strcpy(vec_fnames[numVecFiles++], this_fname);
+        }
+
+    // -----------------------------------------------------
+    // The GEOID12B file names
+    // -----------------------------------------------------
+    } else if (imodel == 13) {
+        *nfiles = 16;
+        int numVecFiles = 0;
+
+        // CONUS -----
+        // Attempt to open the one file model
+        FILE* ifp_conus;
+        strncpy(this_fname, "\0", 256);
+        if (dirlen > 0) {
+            strcpy(this_fname, dirnam);
+        }
+        strcat(this_fname, "g2012bu0.bin");
+
+        if ((ifp_conus = fopen(this_fname, "rb")) != NULL) {
+            *nfiles -= 7;
+            strcpy(vec_fnames[numVecFiles++], this_fname);
+	    fclose(ifp_conus);
+
+        } else {
+            // First 8 files are CONUS -----
+            for (ii = 1; ii <= 8; ++ii) {
+                strncpy(this_fname, "\0", 256);
+                strncpy(cval,       "\0",   3);
+                sprintf(cval, "%01d", ii);
+                if (dirlen > 0) {
+                    strcpy(this_fname, dirnam);
+                }
+                strcat(this_fname, "g2012bu");
+                strcat(this_fname, cval);
+                strcat(this_fname, suffix);
+
+                strcpy(vec_fnames[numVecFiles++], this_fname);
+            }
+        }
+
+        // Alaska -----
+        // Attempt to open the one file model
+        FILE* ifp_ak;
+        strncpy(this_fname, "\0", 256);
+        if (dirlen > 0) {
+            strcpy(this_fname, dirnam);
+        }
+        strcat(this_fname, "g2012ba0.bin");
+
+        if ((ifp_ak = fopen(this_fname, "rb")) != NULL) {
+            *nfiles -= 3;
+            strcpy(vec_fnames[numVecFiles++], this_fname);
+	    fclose(ifp_ak);
+
+        } else {
+            // Next 4 files are ALASKA -----
+            for (ii = 1; ii <= 4; ++ii) {
+                strncpy(this_fname, "\0", 256);
+                strncpy(cval,       "\0",   3);
+                sprintf(cval, "%01d", ii);
+                if (dirlen > 0) {
+                    strcpy(this_fname, dirnam);
+                }
+                strcat(this_fname, "g2012ba");
+                strcat(this_fname, cval);
+                strcat(this_fname, suffix);
+
+                strcpy(vec_fnames[numVecFiles++], this_fname);
+            }
+        }
+
+        // Next 1 file is HAWAII -----
+        for (ii = 1; ii <= 1; ++ii) {
+            strncpy(this_fname, "\0", 256);
+            strncpy(cval,       "\0",   3);
+            sprintf(cval, "%01d", ii);
+            if (dirlen > 0) {
+                strcpy(this_fname, dirnam);
+            }
+            strcat(this_fname, "g2012bh0");
+            strcat(this_fname, suffix);
+
+            strcpy(vec_fnames[numVecFiles++], this_fname);
+        }
+
+        // Next 1 file is GUAM - NORTHERN MARIANAS -----
+        for (ii = 1; ii <= 1; ++ii) {
+            strncpy(this_fname, "\0", 256);
+            strncpy(cval,       "\0",   3);
+            sprintf(cval, "%01d", ii);
+            if (dirlen > 0) {
+                strcpy(this_fname, dirnam);
+            }
+            strcat(this_fname, "g2012bg0");
+            strcat(this_fname, suffix);
+
+            strcpy(vec_fnames[numVecFiles++], this_fname);
+        }
+
+        // Next 1 file is SAMOA -----
+        for (ii = 1; ii <= 1; ++ii) {
+            strncpy(this_fname, "\0", 256);
+            strncpy(cval,       "\0",   3);
+            sprintf(cval, "%01d", ii);
+            if (dirlen > 0) {
+                strcpy(this_fname, dirnam);
+            }
+            strcat(this_fname, "g2012bs0");
+            strcat(this_fname, suffix);
+
+            strcpy(vec_fnames[numVecFiles++], this_fname);
+        }
+
+        // Next 1 file is PR/VI -----
+        for (ii = 1; ii <= 1; ++ii) {
+            strncpy(this_fname, "\0", 256);
+            strncpy(cval,       "\0",   3);
+            sprintf(cval, "%01d", ii);
+            if (dirlen > 0) {
+                strcpy(this_fname, dirnam);
+            }
+            strcat(this_fname, "g2012bp0");
+            strcat(this_fname, suffix);
+
+            strcpy(vec_fnames[numVecFiles++], this_fname);
         }
 
     }//~if(imodel)

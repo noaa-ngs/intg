@@ -6,6 +6,7 @@ static const int  DEBUG = 0;           // diagnostics print if != 0
 // ----- standard library --------------------------------------------
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 // ----- classes, structs, types -------------------------------------
 #include "which1.h"
@@ -13,6 +14,7 @@ static const int  DEBUG = 0;           // diagnostics print if != 0
 
 
 int which1(double xlat, double xlon, int nfiles, int kk, int imodel, 
+           char vec_fnames[50][256],
            GRID_HEADER vec_hdr[50], FILE* vec_ifp[50]) {
 /*******************************************************************************
 * Finds which of the open geoid files is best to be used 
@@ -36,6 +38,7 @@ int which1(double xlat, double xlon, int nfiles, int kk, int imodel,
     double lon_min;
     double lon_max;
     double lon_delta;
+    char vec_fnames_tmp[256];
 
     int  rank[50];
     int  ii;
@@ -57,7 +60,10 @@ int which1(double xlat, double xlon, int nfiles, int kk, int imodel,
     ||  imodel == 3       // GEOID03
     ||  imodel == 4       // USGG2003
     ||  imodel == 6       // USGG2009
-    ||  imodel == 7 ) {   // GEOID09
+    ||  imodel == 7       // GEOID09
+    ||  imodel == 11      // USGG2012
+    ||  imodel == 12      // GEOID12A
+    ||  imodel == 13) {   // GEOID12B
 
         if (DEBUG != 0) {
             printf("1-In which1 Alaska in model block using kk = %d\n", kk);
@@ -70,18 +76,55 @@ int which1(double xlat, double xlon, int nfiles, int kk, int imodel,
                 printf("In which1 Alaska overlap region using kk = %d\n", kk);
             }
 
-            if ((vec_ifp[11] != NULL)) {    // if SouthEast Alaska grid is open
-                kk = 11;                    // then use SE Alaska grid
-                if (DEBUG != 0) {
-                    printf("In which1 Alaska -success- using kk = %d\n", kk);
+            for (ii = 0; ii < nfiles; ++ii) {
+                if (strcmp("GEOID09_ak.bin", vec_fnames[ii]) == 0) {
+                    kk = ii;
+                    if (DEBUG != 0) {
+                        printf("In which1 Alaska (1) OK using kk = %d\n",kk);
+                    }
+                    return( kk );
                 }
-                return( kk );
-            } else {
-                fprintf(stderr, "Error: In Alaska overlap region.\n");
-                fprintf(stderr, "       SouthEast Alaska grid not open.\n");
-                fprintf(stderr, "       Get SouthEast Alaska grid.\n");
-                abort();
+
+                if (strcmp("g2012ba0.bin", vec_fnames[ii]) == 0) {
+                    kk = ii;
+                    if (DEBUG != 0) {
+                        printf("In which1 Alaska (1) OK using kk = %d\n",kk);
+                    }
+                    return( kk );
+                }
+
+                if (strcmp("s2012b00.bin", vec_fnames[ii]) == 0) {
+                    kk = ii;
+                    if (DEBUG != 0) {
+                        printf("In which1 Alaska (1) OK using kk = %d\n",kk);
+                    }
+                    return( kk );
+                }
             }
+
+            for (ii = 0; ii < nfiles; ++ii) {
+                //g++ compiler on the PC does not like strncmp 
+                strcpy(vec_fnames_tmp, vec_fnames[ii]+5);
+                if ( (strncmp("b04.bin", vec_fnames_tmp, 7) == 0) ||
+                     (strncmp("ba4.bin", vec_fnames_tmp, 7) == 0) ) { //GEOID12B filenames were change to keep it 8 characters
+                   kk = ii;
+                    if (DEBUG != 0) {
+                        printf("In which1 Alaska (2) OK using kk = %d\n",kk);
+                    }
+                   return( kk );
+                }
+            }
+
+            /*  Remove if statement below when Alaska distance and variance
+                grids are available for GEOID12A or GEOID12B.  */
+/*
+            if ( imodel != 12 || imodel != 13 ) {
+               fprintf(stderr, "Error: In Alaska overlap region.\n");
+               fprintf(stderr, "       SouthEast Alaska grid not open.\n");
+               fprintf(stderr, "       Get SouthEast Alaska grid.\n");
+               abort();
+            }
+*/
         }
     }
 
@@ -136,9 +179,9 @@ int which1(double xlat, double xlon, int nfiles, int kk, int imodel,
 
                 // 4x4 spline test
                 } else 
-                if( (xlat   - lat_min) > lat_delta 
-                &&  (lat_max - xlat)   > lat_delta 
-                &&  (xlon   - lon_min) > lon_delta 
+                if( (xlat   - lat_min) > lat_delta
+                &&  (lat_max - xlat)   > lat_delta
+                &&  (xlon   - lon_min) > lon_delta
                 &&  (lon_max - xlon)   > lon_delta ) {
                     rank[ii] = 3;
 
