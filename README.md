@@ -6,7 +6,14 @@ NOAA National Geodetic Survey,
 ngs.infocenter@noaa.gov
 
 Visit:
-https://www.ngs.noaa.gov/GEOID/GEOID12A/GEOID12A_data.shtml
+https://geodesy.noaa.gov/GEOID/GEOID18/
+https://geodesy.noaa.gov/GEOID/GEOID12A/
+
+Geoid Grids can be found on the NGS web site under each GEOID model.
+https://geodesy.noaa.gov/GEOID/models.shtml
+
+Experimental GEOID Modeling (xGEOID)
+https://beta.ngs.noaa.gov/GEOID/xGEOID/
 
 ## NOAA Open Source Disclaimer
 
@@ -17,4 +24,3 @@ Please note that there is no confidentiality on any code submitted through pull 
 ## License
 
 Software code created by U.S. Government employees is not subject to copyright in the United States (17 U.S.C. �105). The United States/Department of Commerce reserve all rights to seek and obtain copyright protection in countries other than the United States for Software authored in its entirety by the Department of Commerce. To this end, the Department of Commerce hereby grants to Recipient a royalty-free, nonexclusive license to use, copy, and create derivative works of the Software outside of the United States.
-
